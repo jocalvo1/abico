@@ -118,7 +118,7 @@
                   <ul class="nav nav-collapse">
                     <li>
                       <a href="components/avatars.html">
-                        <span class="sub-item">Avatars</span>
+                        <span class="sub-item">Stocks</span>
                       </a>
                     </li>
                     
@@ -306,8 +306,6 @@
                       </li>
                       <li>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#">My Profile</a>
-                        <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="#">Logout</a>
                       </li>
                     </div>
@@ -369,7 +367,7 @@
                       <div class="col col-stats ms-3 ms-sm-0">
                         <div class="numbers">
                           <p class="card-category">Sales (This week)</p>
-                          <h4 class="card-title">P 1,345</h4>
+                          <h4 class="card-title">P1,345</h4>
                         </div>
                       </div>
                     </div>
@@ -389,7 +387,7 @@
                       </div>
                       <div class="col col-stats ms-3 ms-sm-0">
                         <div class="numbers">
-                          <p class="card-category">Order (TThis week)</p>
+                          <p class="card-category">Order (This week)</p>
                           <h4 class="card-title">576</h4>
                         </div>
                       </div>
@@ -461,24 +459,14 @@
                         </div>
                       </div>
                     </div>
-                    <div class="card-category">March 25 - April 02</div>
+                    <div class="card-category">June 1 - June 7</div>
                   </div>
                   <div class="card-body pb-0">
                     <div class="mb-4 mt-2">
-                      <h1>$4,578.58</h1>
+                      <h1>P4,578.58</h1>
                     </div>
                     <div class="pull-in">
                       <canvas id="dailySalesChart"></canvas>
-                    </div>
-                  </div>
-                </div>
-                <div class="card card-round">
-                  <div class="card-body pb-0">
-                    <div class="h1 fw-bold float-end text-primary">+5%</div>
-                    <h2 class="mb-2">17</h2>
-                    <p class="text-muted">Users online</p>
-                    <div class="pull-in sparkline-fix">
-                      <div id="lineChart"></div>
                     </div>
                   </div>
                 </div>
@@ -491,28 +479,8 @@
                     <div class="card-head-row card-tools-still-right">
                       <div class="card-title">Transaction History</div>
                       <div class="card-tools">
-                        <div class="dropdown">
-                          <button
-                            class="btn btn-icon btn-clean me-0"
-                            type="button"
-                            id="dropdownMenuButton"
-                            data-bs-toggle="dropdown"
-                            aria-haspopup="true"
-                            aria-expanded="false"
-                          >
-                            <i class="fas fa-ellipsis-h"></i>
-                          </button>
-                          <div
-                            class="dropdown-menu"
-                            aria-labelledby="dropdownMenuButton"
-                          >
-                            <a class="dropdown-item" href="#">Action</a>
-                            <a class="dropdown-item" href="#">Another action</a>
-                            <a class="dropdown-item" href="#"
-                              >Something else here</a
-                            >
-                          </div>
-                        </div>
+                        
+                        <a href="#" class="btn btn-label-primary btn-round btn-sm">View all</a>
                       </div>
                     </div>
                   </div>
@@ -522,7 +490,8 @@
                       <table class="table align-items-center mb-0">
                         <thead class="thead-light">
                           <tr>
-                            <th scope="col">Payment Number</th>
+                            <th scope="col">#</th>
+                            <th scope="col">Name</th>
                             <th scope="col" class="text-end">Date & Time</th>
                             <th scope="col" class="text-end">Amount</th>
                             <th scope="col" class="text-end">Status</th>
@@ -530,79 +499,12 @@
                         </thead>
                         <tbody>
                           <tr>
-                            <th scope="row">
-                              <button
-                                class="btn btn-icon btn-round btn-success btn-sm me-2"
-                              >
-                                <i class="fa fa-check"></i>
-                              </button>
-                              Payment from #10231
-                            </th>
-                            <td class="text-end">Mar 19, 2020, 2.45pm</td>
-                            <td class="text-end">$250.00</td>
+                            <td>1</td>
+                            <td>Customer #10231</td>
+                            <td class="text-end">06-01-25, 2:45pm</td>
+                            <td class="text-end">P250.00</td>
                             <td class="text-end">
-                              <span class="badge badge-success">Completed</span>
-                            </td>
-                          </tr>
-                          
-                          <tr>
-                            <th scope="row">
-                              <button
-                                class="btn btn-icon btn-round btn-success btn-sm me-2"
-                              >
-                                <i class="fa fa-check"></i>
-                              </button>
-                              Payment from #10231
-                            </th>
-                            <td class="text-end">Mar 19, 2020, 2.45pm</td>
-                            <td class="text-end">$250.00</td>
-                            <td class="text-end">
-                              <span class="badge badge-success">Completed</span>
-                            </td>
-                          </tr>
-                          <tr>
-                            <th scope="row">
-                              <button
-                                class="btn btn-icon btn-round btn-success btn-sm me-2"
-                              >
-                                <i class="fa fa-check"></i>
-                              </button>
-                              Payment from #10231
-                            </th>
-                            <td class="text-end">Mar 19, 2020, 2.45pm</td>
-                            <td class="text-end">$250.00</td>
-                            <td class="text-end">
-                              <span class="badge badge-success">Completed</span>
-                            </td>
-                          </tr>
-                          <tr>
-                            <th scope="row">
-                              <button
-                                class="btn btn-icon btn-round btn-success btn-sm me-2"
-                              >
-                                <i class="fa fa-check"></i>
-                              </button>
-                              Payment from #10231
-                            </th>
-                            <td class="text-end">Mar 19, 2020, 2.45pm</td>
-                            <td class="text-end">$250.00</td>
-                            <td class="text-end">
-                              <span class="badge badge-success">Completed</span>
-                            </td>
-                          </tr>
-                          <tr>
-                            <th scope="row">
-                              <button
-                                class="btn btn-icon btn-round btn-success btn-sm me-2"
-                              >
-                                <i class="fa fa-check"></i>
-                              </button>
-                              Payment from #10231
-                            </th>
-                            <td class="text-end">Mar 19, 2020, 2.45pm</td>
-                            <td class="text-end">$250.00</td>
-                            <td class="text-end">
-                              <span class="badge badge-success">Completed</span>
+                              <a class="badge badge-success">Paid</a>
                             </td>
                           </tr>
                         </tbody>
