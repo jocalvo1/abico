@@ -1,3 +1,6 @@
+Abico or Admin
+AbicoStore2025
+
 LOGIN
 
 DASHBOARD
