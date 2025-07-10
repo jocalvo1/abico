@@ -1,5 +1,5 @@
-Abico or Admin
-AbicoStore2025
+Username: Abico or Admin
+Password: AbicoStore2025
 
 LOGIN
 
