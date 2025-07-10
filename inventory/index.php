@@ -1,24 +1,3 @@
-<<<<<<< HEAD
-        <?php
-          include __DIR__ . "/../templates/links.php";
-        ?>
-      <!-- Sidebar -->
-        <?php 
-          include __DIR__ . "/../templates/sidebar.php";
-        ?>
-
-      <div class="main-panel">
-        
-        <?php
-          include __DIR__ . "/../templates/header.php";
-        ?>
-
-
-
-        <?php 
-          include __DIR__ . "/../templates/footer.php";
-        ?>
-=======
 <?php
 // Include required files
 require_once __DIR__ . '/../config/database.php';
@@ -527,4 +506,3 @@ include __DIR__ . "/../templates/sidebar.php";
 </script>
 
 
->>>>>>> 9431515 (your update message)
