@@ -32,26 +32,18 @@ include __DIR__ . "/../templates/links.php";
 include __DIR__ . "/../templates/sidebar.php";
 ?>
 
-<div class="main-panel">
     <?php include __DIR__ . "/../templates/header.php"; ?>
     
     <div class="content">
         <div class="page-inner">
-            <div class="page-header">
-                <h4 class="page-title">Inventory Management</h4>
-                <ul class="breadcrumbs">
-                    <li class="nav-home">
-                        <a href="/ABICO">
-                            <i class="flaticon-home"></i>
-                        </a>
-                    </li>
-                    <li class="separator">
-                        <i class="flaticon-right-arrow"></i>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#">Inventory</a>
-                    </li>
-                </ul>
+            <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row pt-2 pb-4">
+                <div>
+                    <h3 class="fw-bold mb-3">Dashboard</h3>
+                </div>
+                <div class="ms-md-auto py-2 py-md-0">
+                    <a href="/ABICO/inventory/index.php" class="btn btn-label-info btn-round me-2">View Inventory</a>
+                    <a href="/ABICO/sales/index.php" class="btn btn-primary btn-round">New Transaction</a>
+                </div>
             </div>
             
             <div class="row">
@@ -246,7 +238,6 @@ include __DIR__ . "/../templates/sidebar.php";
     </div>
 
     <?php include __DIR__ . "/../templates/footer.php"; ?>
-</div>
 
 <!--   Core JS Files   -->
 <script src="/ABICO/assets/js/core/jquery-3.7.1.min.js"></script>
