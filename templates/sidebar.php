@@ -99,8 +99,14 @@
             </ul>
           </div>
         </li>
-        
+        <li class="nav-item">
+          <a href="/ABICO/l/index.php">
+            <i class="fa-solid fa-power-off"></i>
+            <p>Logout</p>
+          </a>
+        </li>
       </ul>
     </div>
   </div>
 </div>
+
