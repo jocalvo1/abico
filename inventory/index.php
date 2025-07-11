@@ -35,7 +35,19 @@ include __DIR__ . "/../templates/nav.php";
     <div class="page-inner">
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <h3 class="card-title fw-bold mb-0">Inventory</h3>
+                <div class="d-flex align-items-center">
+                    <h4 class="card-title mb-0">
+                        <div class="btn-group" role="group">
+                            <a href="index.php" class="btn btn-outline-primary active">
+                                <i class="fas fa-users"></i> Inventory
+                            </a>
+                            <a href="activity_log.php" class="btn btn-outline-secondary">
+                                <i class="fas fa-history"></i> Activity Logs
+                            </a>
+                        </div>
+                    </h4>
+                </div>
+
                 <button class="btn btn-primary btn-round" data-bs-toggle="modal" data-bs-target="#addProductModal">
                     <i class="fas fa-plus me-2"></i>Add new item
                 </button>
@@ -93,37 +105,103 @@ include __DIR__ . "/../templates/nav.php";
 <div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add New Product</h5>
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-semibold">Add New Product</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="/abico/includes/inventory/add_product.php" method="POST">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Product Name</label>
-                        <input type="text" class="form-control" name="product_name" placeholder="Enter product name"     required>
+                        <label class="form-label small fw-medium">Product Name</label>
+                        <input type="text" class="form-control form-control-sm" name="product_name" placeholder="e.g., Premium White Sugar" required>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" name="description" rows="2" placeholder="Enter description"></textarea>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Quantity</label>
-                            <input type="number" class="form-control" name="quantity" placeholder="Enter quantity" min="0" required>
+                    <div class="border rounded p-3 mb-3">
+                        <h6 class="mb-3 pb-1 border-bottom fw-semibold text-uppercase small text-muted">Product Details</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Product Type</label>
+                                    <select class="form-select" name="product_type" id="productType" required>
+                                    <option value="">-- Select Product Type --</option>
+                                    <optgroup label="Weight">
+                                        <option value="gram">Gram (g)</option>
+                                        <option value="kilo">Kilogram (kg)</option>
+                                    </optgroup>
+                                    <optgroup label="Volume">
+                                        <option value="liter">Liter (L)</option>
+                                        <option value="ml">Milliliter (ml)</option>
+                                    </optgroup>
+                                    <optgroup label="Count">
+                                        <option value="piece">Piece (pc)</option>
+                                        <option value="dozen">Dozen</option>
+                                        <option value="set">Set</option>
+                                        <option value="tray">Tray</option>
+                                    </optgroup>
+                                    <optgroup label="Containers">
+                                        <option value="bottle">Bottle</option>
+                                        <option value="can">Can</option>
+                                        <option value="box">Box</option>
+                                        <option value="pack">Pack</option>
+                                        <option value="sachet">Sachet</option>
+                                        <option value="pouch">Pouch</option>
+                                        <option value="bar">Bar</option>
+                                        <option value="cup">Cup</option>
+                                        <option value="roll">Roll</option>
+                                        <option value="stick">Stick</option>
+                                        <option value="tetra">Tetra Pack</option>
+                                    </optgroup>
+                                    <option value="other">-- Other --</option>
+                                    </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label d-flex justify-content-between">
+                                    <span>Quantity</span>
+                                    <span class="text-muted small" id="unitHelp">per item</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" name="product_quantity" id="productQuantity" min="0.01" step="0.01" value="1" required>
+                                    <span class="input-group-text bg-light" id="typeUnit">pc</span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div id="otherProductType" class="d-none">
+                                    <div class="border-top pt-3">
+                                        <label class="form-label">Specify Product Type</label>
+                                        <input type="text" class="form-control" name="other_product_type" placeholder="Enter custom product type">
+                                    </div>
+                                </div>
+                                <div id="piecesPerPackContainer" style="display: none;">
+                                    <div class="border-top pt-3">
+                                        <label class="form-label">Pieces per Pack</label>
+                                        <input type="number" class="form-control" name="pieces_per_pack" id="piecesPerPack" min="1" value="1">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Price</label>
-                            <div class="input-group">
-                                <span class="input-group-text">₱</span>
-                                <input type="number" class="form-control" name="price" placeholder="Enter price" min="0" step="0.01" required>
+                    </div>
+                    <div class="border rounded p-3 mb-3">
+                        <h6 class="mb-3 pb-1 border-bottom fw-semibold text-uppercase small text-muted">Inventory Details</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Stock Quantity</label>
+                                <input type="number" class="form-control" name="quantity" placeholder="Enter quantity" min="0" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Price</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₱</span>
+                                    <input type="number" class="form-control" name="price" placeholder="Enter price" min="0" step="0.01" required>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save Product</button>
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-sm btn-primary px-3">
+                        <i class="fas fa-save me-1"></i> Save
+                    </button>
                 </div>
             </form>
         </div>
@@ -186,6 +264,53 @@ include __DIR__ . "/../templates/nav.php";
 
 <script>
 $(document).ready(function() {
+    // Update unit display and handle product type changes
+    function updateUnitDisplay() {
+        const type = $('#productType').val();
+        let unit = 'pc';
+        let unitHelp = 'per item';
+        
+        // Show/hide pieces per pack
+        if (type === 'pack') {
+            $('#piecesPerPackContainer').show();
+            unit = 'pack';
+            unitHelp = 'per pack';
+        } else {
+            $('#piecesPerPackContainer').hide();
+            unitHelp = 'per ' + (type || 'item');
+        }
+        
+        // Handle unit display
+        switch(type) {
+            case 'gram': unit = 'g'; break;
+            case 'kilo': unit = 'kg'; break;
+            case 'liter': unit = 'L'; break;
+            case 'ml': unit = 'ml'; break;
+            case 'piece': unit = 'pc'; break;
+            case 'other': 
+                unit = ''; 
+                $('#otherProductType').removeClass('d-none');
+                unitHelp = 'per unit';
+                break;
+            default: 
+                if (type !== 'pack') {
+                    unit = 'pc';
+                }
+                $('#otherProductType').addClass('d-none');
+        }
+        
+        $('#typeUnit').text(unit);
+        $('#unitHelp').text(unitHelp);
+    }
+    
+    // Initialize unit display
+    updateUnitDisplay();
+    
+    // Update unit when type changes
+    $('#productType').on('change', updateUnitDisplay);
+
+
+
     // Initialize DataTable
     var table = $('#inventoryTable').DataTable({
         "pageLength": 10, // Default number of entries

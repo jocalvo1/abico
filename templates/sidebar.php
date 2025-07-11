@@ -67,7 +67,7 @@ $base = "/ABICO";
               </a>
             </li>
             <li class="nav-item">
-              <a href="<?= $base; ?>/includes/session.php?destroy=1">
+              <a href="javascript:void(0)" class="text-danger" id="logoutBtn">
                 <i class="fa-solid fa-power-off"></i>
                 <p>Logout</p>
               </a>
@@ -77,3 +77,30 @@ $base = "/ABICO";
       </div>
     </div>
       <!-- End Sidebar -->
+
+<!-- Include jQuery first -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Then include SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+$(document).ready(function() {
+    $('#logoutBtn').on('click', function(e) {
+        e.preventDefault();
+        
+        Swal.fire({
+            title: 'Logout',
+            text: 'Are you sure you want to logout?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, logout',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '<?= $base; ?>/includes/logout.php';
+            }
+        });
+    });
+});
+</script>
