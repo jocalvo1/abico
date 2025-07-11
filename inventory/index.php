@@ -1,8 +1,9 @@
 <?php
 // Include required files
 require_once __DIR__ . '/../includes/database.php';
-require_once __DIR__ . '/../includes/Session.php';
+require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../includes/inventory/product.php';
+
 
 // etc.
 
@@ -23,11 +24,8 @@ $db = $database->getConnection();
 // Initialize Product object
 $product = new product($db);
 
-// Handle search
-$search = isset($_GET['search']) ? $_GET['search'] : '';
-
 // Get all products
-$stmt = $product->readAll($search);
+$stmt = $product->readAll();
 
 // Include template header and sidebar
 include __DIR__ . "/../templates/links.php";
@@ -60,36 +58,14 @@ include __DIR__ . "/../templates/sidebar.php";
                 <div class="col-md-12">
                     <div class="card">
                         <div class="card-header">
-                            <div class="d-flex align-items-center">
-                                <h4 class="card-title">Products</h4>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h4 class="card-title mb-0">Products</h4>
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                                    <i class="fa fa-plus"></i> Add New Product
+                                </button>
                             </div>
                         </div>
                         <div class="card-body">
-                            <!-- Search and Add Product Section -->
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <form action="" method="get" class="form-inline">
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" name="search" placeholder="Search products..." value="<?php echo htmlspecialchars($search); ?>">
-                                            <div class="input-group-append">
-                                                <button class="btn btn-outline-secondary" type="submit">
-                                                    <i class="fa fa-search"></i>
-                                                </button>
-                                                <?php if (!empty($search)): ?>
-                                                    <a href="index.php" class="btn btn-outline-danger">
-                                                        <i class="fa fa-times"></i>
-                                                    </a>
-                                                <?php endif; ?>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-                                <div class="col-md-6 text-end">
-                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                                        <i class="fa fa-plus"></i> Add New Product
-                                    </button>
-                                </div>
-                            </div>
 
                             <!-- Products Table -->
                             <div class="table-responsive">
@@ -160,7 +136,7 @@ include __DIR__ . "/../templates/sidebar.php";
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form id="addProductForm" action="actions/add_product.php" method="post">
+                <form id="addProductForm" action="../includes/inventory/add_product.php" method="post">
                     <div class="modal-body">
                         <div class="form-group">
                             <label for="product_name">Product Name <span class="text-danger">*</span></label>
@@ -354,7 +330,7 @@ include __DIR__ . "/../templates/sidebar.php";
             submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
             
             $.ajax({
-                url: 'actions/add_product.php',
+                url: '/ABICO/includes/inventory/add_product.php',
                 type: 'POST',
                 data: form.serialize(),
                 dataType: 'json',
@@ -409,7 +385,7 @@ include __DIR__ . "/../templates/sidebar.php";
             var form = $(this);
             
             $.ajax({
-                url: form.attr('action'),
+                url: '/ABICO/includes/inventory/update_product.php',
                 type: 'POST',
                 data: form.serialize(),
                 dataType: 'json',
@@ -462,7 +438,7 @@ include __DIR__ . "/../templates/sidebar.php";
             }).then((result) => {
                 if (result.isConfirmed) {
                     $.ajax({
-                        url: form.attr('action'),
+                        url: '/ABICO/includes/inventory/delete_product.php',
                         type: 'POST',
                         data: form.serialize(),
                         dataType: 'json',

@@ -1,7 +1,7 @@
 <?php
 // Include required files
-require_once __DIR__ . '/../includes/product.php';
-require_once __DIR__ . '/../includes/database.php';
+require_once __DIR__ . '/product.php';
+require_once __DIR__ . '/../database.php';
 
 // Set headers
 header('Content-Type: application/json');
@@ -16,34 +16,22 @@ $product = new product($db);
 // Get posted data
 $data = $_POST;
 
-// Set ID to be updated
-$product->id = $data['id'];
-
-// Check if product exists
-if(!$product->readOne()) {
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Product not found.'
-    ]);
-    exit();
-}
-
 // Set product property values
 $product->product_name = $data['product_name'];
 $product->description = $data['description'];
 $product->quantity = $data['quantity'];
 $product->price = $data['price'];
 
-// Update the product
-if($product->update()){
+// Create the product
+if($product->create()){
     echo json_encode([
         'status' => 'success',
-        'message' => 'Product was updated successfully.'
+        'message' => 'Product was created successfully.'
     ]);
 } else {
     echo json_encode([
         'status' => 'error',
-        'message' => 'Unable to update product.'
+        'message' => 'Unable to create product.'
     ]);
 }
 ?>

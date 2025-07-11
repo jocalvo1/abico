@@ -1,7 +1,7 @@
 <?php
 // Include required files
-require_once __DIR__ . '/../includes/product.php';
-require_once __DIR__ . '/../includes/database.php';
+require_once __DIR__ . '/product.php';
+require_once __DIR__ . '/../database.php';
 
 // Set headers
 header('Content-Type: application/json');
@@ -16,7 +16,7 @@ $product = new product($db);
 // Get posted data
 $data = $_POST;
 
-// Set product ID to be deleted
+// Set ID to be updated
 $product->id = $data['id'];
 
 // Check if product exists
@@ -28,16 +28,22 @@ if(!$product->readOne()) {
     exit();
 }
 
-// Delete the product
-if($product->delete()){
+// Set product property values
+$product->product_name = $data['product_name'];
+$product->description = $data['description'];
+$product->quantity = $data['quantity'];
+$product->price = $data['price'];
+
+// Update the product
+if($product->update()){
     echo json_encode([
         'status' => 'success',
-        'message' => 'Product was deleted successfully.'
+        'message' => 'Product was updated successfully.'
     ]);
 } else {
     echo json_encode([
         'status' => 'error',
-        'message' => 'Unable to delete product.'
+        'message' => 'Unable to update product.'
     ]);
 }
 ?>

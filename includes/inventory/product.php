@@ -49,21 +49,9 @@ class product {
     }
 
     // Read all products
-    public function readAll($search = '') {
-        $query = "SELECT * FROM " . $this->table_name;
-        
-        if (!empty($search)) {
-            $query .= " WHERE product_name LIKE :search OR description LIKE :search";
-        }
-        
-        $query .= " ORDER BY created_at DESC";
+    public function readAll() {
+        $query = "SELECT * FROM " . $this->table_name . " ORDER BY created_at DESC";
         $stmt = $this->conn->prepare($query);
-        
-        if (!empty($search)) {
-            $search = "%$search%";
-            $stmt->bindParam(':search', $search);
-        }
-        
         $stmt->execute();
         return $stmt;
     }
