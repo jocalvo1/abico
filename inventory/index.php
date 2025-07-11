@@ -141,17 +141,17 @@ include __DIR__ . "/../templates/sidebar.php";
                     <div class="modal-body">
                         <div class="form-group">
                             <label for="product_name">Product Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="product_name" name="product_name" required>
+                            <input type="text" class="form-control" id="product_name" name="product_name" placeholder="Enter product name" required>
                         </div>
                         <div class="form-group">
                             <label for="description">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="2"></textarea>
+                            <textarea class="form-control" id="description" name="description" rows="2" placeholder="Enter description"></textarea>
                         </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="quantity">Quantity <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control" id="quantity" name="quantity" min="0" required>
+                                    <input type="number" class="form-control" id="quantity" name="quantity" min="0" placeholder="Enter quantity" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -161,7 +161,7 @@ include __DIR__ . "/../templates/sidebar.php";
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">₱</span>
                                         </div>
-                                        <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" required>
+                                        <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" placeholder="Enter price" required>
                                     </div>
                                 </div>
                             </div>
