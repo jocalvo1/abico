@@ -282,9 +282,24 @@ include __DIR__ . "/../templates/sidebar.php";
                 </div>
             </div>
         </div>
+=======
+<div class="container">
+  <div class="page-inner">
+    <!-- Ledger Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <h4 class="card-title fw-bold m-0">Ledger</h4>
+          <button class="btn btn-primary btn-round">
+            <i class="fas fa-plus me-2"></i>Add new customer
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="text-muted">Ledger content will go here.</p>
+      </div>
     </div>
 </div>
-
     <!-- Footer -->
     <?php include __DIR__ . "/../templates/footer.php"; ?>
 
@@ -582,3 +597,9 @@ include __DIR__ . "/../templates/sidebar.php";
         });
     });
 </script>
+<?php include __DIR__ . "/../templates/footer.php"; ?>
+</div>
+  <!--   Core JS Files   -->
+  <?php include __DIR__ . "/../templates/scripts.php"; ?>
+</body>
+</html>
