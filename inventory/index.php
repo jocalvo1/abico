@@ -133,9 +133,6 @@ include __DIR__ . "/../templates/sidebar.php";
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Add New Product</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
                 </div>
                 <form id="addProductForm" action="../includes/inventory/add_product.php" method="post">
                     <div class="modal-body">
@@ -168,7 +165,7 @@ include __DIR__ . "/../templates/sidebar.php";
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('addProductModal')">Cancel</button>
                         <button type="submit" class="btn btn-primary">Save Product</button>
                     </div>
                 </form>
@@ -182,9 +179,6 @@ include __DIR__ . "/../templates/sidebar.php";
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Edit Product</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
                 </div>
                 <form id="editProductForm" action="actions/update_product.php" method="post">
                     <input type="hidden" name="id" id="edit_id">
@@ -218,7 +212,7 @@ include __DIR__ . "/../templates/sidebar.php";
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('editProductModal')">Cancel</button>
                         <button type="submit" class="btn btn-primary">Update Product</button>
                     </div>
                 </form>
@@ -241,7 +235,7 @@ include __DIR__ . "/../templates/sidebar.php";
                     <p class="text-danger">This action cannot be undone.</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
                     <form id="deleteForm" action="actions/delete_product.php" method="post" style="display: inline-block;">
                         <input type="hidden" name="id" id="delete_id">
                         <button type="submit" class="btn btn-danger">Delete</button>
@@ -482,6 +476,24 @@ include __DIR__ . "/../templates/sidebar.php";
             $(this).find('form').trigger('reset');
         });
     });
+    
+    // Function to close modals
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modal);
+        modalInstance.hide();
+        
+        // Remove modal-open class and modal backdrop
+        document.body.classList.remove('modal-open');
+        const backdrops = document.getElementsByClassName('modal-backdrop');
+        while(backdrops[0]) {
+            backdrops[0].parentNode.removeChild(backdrops[0]);
+        }
+        
+        // Re-enable body scroll
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+    }
 </script>
 
 
