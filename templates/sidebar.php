@@ -44,60 +44,24 @@
         </li>
 
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#tables">
+          <a href="<?= $base; ?>/sales/index.php">
             <i class="fas fa-table"></i>
             <p>Sales</p>
-            <span class="caret"></span>
           </a>
-          <div class="collapse" id="tables">
-            <ul class="nav nav-collapse">
-              <li>
-                <a href="/ABICO/sales/index.php">
-                  <span class="sub-item">Create Transaction</span>
-                </a>
-              </li>
-              <li>
-                <a href="/ABICO/sales/history.php">
-                  <span class="sub-item">Transaction History</span>
-                </a>
-              </li>
-            </ul>
-          </div>
         </li>
         
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#base">
+          <a href="<?= $base; ?>/inventory/index.php">
             <i class="fas fa-layer-group"></i>
             <p>Inventory</p>
-            <span class="caret"></span>
           </a>
-          <div class="collapse" id="base">
-            <ul class="nav nav-collapse">
-              <li>
-                <a href="/ABICO/inventory/index.php">
-                  <span class="sub-item">Stocks</span>
-                </a>
-              </li>
-              
-            </ul>
-          </div>
         </li>
         
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#forms">
+          <a href="<?= $base; ?>/ledger/index.php">
             <i class="fas fa-pen-square"></i>
             <p>Ledger</p>
-            <span class="caret"></span>
           </a>
-          <div class="collapse" id="forms">
-            <ul class="nav nav-collapse">
-              <li>
-                <a href="/ABICO/ledger/index.php">
-                  <span class="sub-item">Customers</span>
-                </a>
-              </li>
-            </ul>
-          </div>
         </li>
         <li class="nav-item">
           <a href="/ABICO/l/index.php">

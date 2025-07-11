@@ -59,7 +59,7 @@ include __DIR__ . "/../templates/sidebar.php";
                     <div class="card">
                         <div class="card-header">
                             <div class="d-flex justify-content-between align-items-center">
-                                <h4 class="card-title mb-0">Products</h4>
+                                <h4 class="card-title m-0">Products</h4>
                                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
                                     <i class="fa fa-plus"></i> Add New Product
                                 </button>
@@ -72,24 +72,25 @@ include __DIR__ . "/../templates/sidebar.php";
                                 <table id="productTable" class="display table table-striped table-hover">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
-                                            <th>Product Name</th>
+                                            <th>No.</th>
+                                            <th>Name</th>
                                             <th>Description</th>
                                             <th>Quantity</th>
                                             <th>Price</th>
-                                            <th>Created At</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php while ($row = $stmt->fetch(PDO::FETCH_ASSOC)): ?>
+                                        <?php 
+                                        $loop_index = 1;
+                                        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)): 
+                                        ?>
                                             <tr>
-                                                <td><?php echo htmlspecialchars($row['id']); ?></td>
-                                                <td><?php echo htmlspecialchars($row['product_name']); ?></td>
-                                                <td><?php echo htmlspecialchars($row['description']); ?></td>
+                                                <td><?php echo $loop_index++; ?></td>
+                                                <td class="text-truncate" style="max-width: 200px;" title="<?php echo htmlspecialchars($row['product_name']); ?>"><?php echo htmlspecialchars(mb_strimwidth($row['product_name'], 0, 20, '...')); ?></td>
+                                                <td class="text-truncate" style="max-width: 200px;" title="<?php echo htmlspecialchars($row['description']); ?>"><?php echo htmlspecialchars(mb_strimwidth($row['description'], 0, 20, '...')); ?></td>
                                                 <td class="text-right"><?php echo number_format($row['quantity']); ?></td>
                                                 <td class="text-right">₱<?php echo number_format($row['price'], 2); ?></td>
-                                                <td><?php echo date('M d, Y', strtotime($row['created_at'])); ?></td>
                                                 <td class="text-center">
                                                     <div class="btn-group" role="group">
                                                         <button class="btn btn-warning btn-sm edit-btn" 
@@ -269,7 +270,7 @@ include __DIR__ . "/../templates/sidebar.php";
             "pageLength": 10,
             "order": [[0, "desc"]],
             "columnDefs": [
-                { "orderable": false, "targets": [6] } // Disable sorting on actions column
+                { "orderable": false, "targets": [5] } // Disable sorting on actions column (now index 5)
             ]
         });
 

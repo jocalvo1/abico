@@ -50,7 +50,7 @@ class product {
 
     // Read all products
     public function readAll() {
-        $query = "SELECT * FROM " . $this->table_name . " ORDER BY created_at DESC";
+        $query = "SELECT * FROM " . $this->table_name . " ORDER BY created_at ASC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt;
