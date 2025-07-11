@@ -1,43 +1,62 @@
 <?php
-// Include required files
-require_once __DIR__ . '/product.php';
-require_once __DIR__ . '/../database.php';
-
-// Set headers
+session_start();
 header('Content-Type: application/json');
 
-// Initialize database connection
-$database = new dbconn();
-$db = $database->getConnection();
+// Include required files
+require_once __DIR__ . '/../../includes/database.php';
+require_once __DIR__ . '/../../includes/session.php';
+require_once __DIR__ . '/product.php';
 
-// Initialize Product object
-$product = new product($db);
+// Initialize response array
+$response = [
+    'success' => false,
+    'message' => ''
+];
 
-// Get posted data
-$data = $_POST;
+try {
+    // Check if user is logged in
+    $session = new Session();
+    $session->init();
+    
+    if (!$session->get('login')) {
+        throw new Exception('Unauthorized access');
+    }
 
-// Set product ID to be deleted
-$product->id = $data['id'];
+    // Check if ID is provided
+    if (!isset($_POST['id']) || empty($_POST['id'])) {
+        throw new Exception('Product ID is required');
+    }
 
-// Check if product exists
-if(!$product->readOne()) {
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Product not found.'
-    ]);
-    exit();
+    $productId = (int)$_POST['id'];
+
+    // Initialize database connection
+    $database = new dbconn();
+    $db = $database->getConnection();
+
+    // Initialize Product object
+    $product = new product($db);
+    $product->id = $productId;
+
+    // Check if product exists
+    if (!$product->readOne()) {
+        throw new Exception('Product not found');
+    }
+
+    // Store product name for the success message
+    $productName = $product->product_name;
+
+    // Attempt to delete the product
+    if ($product->delete()) {
+        $response['success'] = true;
+        $response['message'] = "Product '{$productName}' has been deleted successfully.";
+    } else {
+        throw new Exception('Failed to delete product');
+    }
+
+} catch (Exception $e) {
+    $response['message'] = $e->getMessage();
 }
 
-// Delete the product
-if($product->delete()){
-    echo json_encode([
-        'status' => 'success',
-        'message' => 'Product was deleted successfully.'
-    ]);
-} else {
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Unable to delete product.'
-    ]);
-}
+// Return JSON response
+echo json_encode($response);
 ?>

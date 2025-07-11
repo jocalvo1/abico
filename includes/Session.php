@@ -24,7 +24,7 @@ class session {
     public static function destroy() {
         session_destroy();
         session_unset();
-        header("Location: ../login.php");
+        header("Location: /abico/login.php");
         exit();
     }
     
