@@ -35,7 +35,6 @@ include __DIR__ . "/../templates/nav.php";
     <div class="page-inner">
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
-<<<<<<< HEAD
                 <div class="d-flex align-items-center">
                     <h4 class="card-title mb-0">
                         <div class="btn-group" role="group">
@@ -49,9 +48,6 @@ include __DIR__ . "/../templates/nav.php";
                     </h4>
                 </div>
 
-=======
-                <h3 class="card-title fw-bold mb-0">Inventory</h3>
->>>>>>> b08138570596c522d62056973ef020fc9b47a02f
                 <button class="btn btn-primary btn-round" data-bs-toggle="modal" data-bs-target="#addProductModal">
                     <i class="fas fa-plus me-2"></i>Add new item
                 </button>
@@ -109,19 +105,13 @@ include __DIR__ . "/../templates/nav.php";
 <div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-<<<<<<< HEAD
             <div class="modal-header bg-light">
                 <h5 class="modal-title fw-semibold">Add New Product</h5>
-=======
-            <div class="modal-header">
-                <h5 class="modal-title">Add New Product</h5>
->>>>>>> b08138570596c522d62056973ef020fc9b47a02f
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="/abico/includes/inventory/add_product.php" method="POST">
                 <div class="modal-body">
                     <div class="mb-3">
-<<<<<<< HEAD
                         <label class="form-label small fw-medium">Product Name</label>
                         <input type="text" class="form-control form-control-sm" name="product_name" placeholder="e.g., Premium White Sugar" required>
                     </div>
@@ -201,30 +191,10 @@ include __DIR__ . "/../templates/nav.php";
                                     <span class="input-group-text">₱</span>
                                     <input type="number" class="form-control" name="price" placeholder="Enter price" min="0" step="0.01" required>
                                 </div>
-=======
-                        <label class="form-label">Product Name</label>
-                        <input type="text" class="form-control" name="product_name" placeholder="Enter product name"     required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" name="description" rows="2" placeholder="Enter description"></textarea>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Quantity</label>
-                            <input type="number" class="form-control" name="quantity" placeholder="Enter quantity" min="0" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Price</label>
-                            <div class="input-group">
-                                <span class="input-group-text">₱</span>
-                                <input type="number" class="form-control" name="price" placeholder="Enter price" min="0" step="0.01" required>
->>>>>>> b08138570596c522d62056973ef020fc9b47a02f
                             </div>
                         </div>
                     </div>
                 </div>
-<<<<<<< HEAD
                 <div class="modal-footer bg-light py-2">
                     <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i> Cancel
@@ -232,11 +202,6 @@ include __DIR__ . "/../templates/nav.php";
                     <button type="submit" class="btn btn-sm btn-primary px-3">
                         <i class="fas fa-save me-1"></i> Save
                     </button>
-=======
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save Product</button>
->>>>>>> b08138570596c522d62056973ef020fc9b47a02f
                 </div>
             </form>
         </div>
@@ -299,7 +264,6 @@ include __DIR__ . "/../templates/nav.php";
 
 <script>
 $(document).ready(function() {
-<<<<<<< HEAD
     // Update unit display and handle product type changes
     function updateUnitDisplay() {
         const type = $('#productType').val();
@@ -372,33 +336,6 @@ $(document).ready(function() {
         ]
     });
 
-=======
-    // Initialize DataTable
-    var table = $('#inventoryTable').DataTable({
-        "pageLength": 10, // Default number of entries
-        "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]], // Entries dropdown
-        "order": [[0, 'asc']], // Default sorting by first column
-        "responsive": true,
-        "language": {
-            "search": "_INPUT_",
-            "searchPlaceholder": "Search products...",
-            "lengthMenu": "Show _MENU_ entries",
-            "info": "Showing _START_ to _END_ of _TOTAL_ entries",
-            "infoEmpty": "Showing 0 to 0 of 0 entries",
-            "infoFiltered": "(filtered from _MAX_ total entries)",
-            "paginate": {
-                "first": "First",
-                "last": "Last",
-                "next": "Next",
-                "previous": "Previous"
-            }
-        },
-        "columnDefs": [
-            { "orderable": false, "targets": [5] } // Disable sorting on Actions column
-        ]
-    });
-
->>>>>>> b08138570596c522d62056973ef020fc9b47a02f
     // Add custom search input
     $('.dataTables_filter input').addClass('form-control mb-3');
     

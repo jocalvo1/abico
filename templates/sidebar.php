@@ -67,11 +67,7 @@ $base = "/ABICO";
               </a>
             </li>
             <li class="nav-item">
-<<<<<<< HEAD
               <a href="javascript:void(0)" class="text-danger" id="logoutBtn">
-=======
-              <a href="<?= $base; ?>/includes/session.php?destroy=1">
->>>>>>> b08138570596c522d62056973ef020fc9b47a02f
                 <i class="fa-solid fa-power-off"></i>
                 <p>Logout</p>
               </a>
@@ -81,7 +77,6 @@ $base = "/ABICO";
       </div>
     </div>
       <!-- End Sidebar -->
-<<<<<<< HEAD
 
 <!-- Include jQuery first -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -109,5 +104,3 @@ $(document).ready(function() {
     });
 });
 </script>
-=======
->>>>>>> b08138570596c522d62056973ef020fc9b47a02f
