@@ -1,8 +1,10 @@
 <?php
 // Include required files
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/database.php';
 require_once __DIR__ . '/../includes/Session.php';
-require_once __DIR__ . '/includes/Product.php';
+require_once __DIR__ . '/../includes/inventory/product.php';
+
+// etc.
 
 // Initialize session
 $session = new Session();
@@ -15,11 +17,11 @@ if (!$session->get('login')) {
 }
 
 // Initialize database connection
-$database = new Database();
+$database = new dbconn();
 $db = $database->getConnection();
 
 // Initialize Product object
-$product = new Product($db);
+$product = new product($db);
 
 // Handle search
 $search = isset($_GET['search']) ? $_GET['search'] : '';

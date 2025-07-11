@@ -1,17 +1,17 @@
 <?php
 // Include required files
-require_once __DIR__ . '/../includes/Product.php';
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../includes/product.php';
+require_once __DIR__ . '/../includes/database.php';
 
 // Set headers
 header('Content-Type: application/json');
 
 // Initialize database connection
-$database = new Database();
+$database = new dbconn();
 $db = $database->getConnection();
 
 // Initialize Product object
-$product = new Product($db);
+$product = new product($db);
 
 // Get posted data
 $data = $_POST;

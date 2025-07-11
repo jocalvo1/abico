@@ -1,5 +1,5 @@
 <?php
-class Session {
+class session {
     public static function init() {
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
@@ -28,3 +28,6 @@ class Session {
         }
     }
 }
+
+
+// Checks if may naka log nga user or not. Initializes new session whenever may bag o nga user nga nakalog in

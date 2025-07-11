@@ -1,9 +1,9 @@
 <?php
 session_start();
-require_once 'includes/Session.php';
-require_once 'config/database.php';
+require_once 'includes/session.php';
+require_once 'includes/database.php';
 
-$session = new Session();
+$session = new session();
 $session->init();
 
 // Check if user is logged in

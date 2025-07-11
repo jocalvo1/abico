@@ -1,6 +1,6 @@
 <?php
-require_once 'includes/Session.php';
-require_once 'config/database.php';
+require_once 'includes/session.php';
+require_once 'includes/database.php';
 
 $session = new Session();
 $session->init();
@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (empty($username) || empty($password)) {
         $error = 'Please enter both username and password';
     } else {
-        $database = new Database();
+        $database = new dbconn();
         $db = $database->getConnection();
         
         try {
