@@ -1,8 +1,9 @@
 <?php
+session_start();
 // Include required files
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/Session.php';
-require_once __DIR__ . '/includes/Product.php';
+require_once __DIR__ . '/../includes/database.php';
+require_once __DIR__ . '/../includes/session.php';
+require_once __DIR__ . '/../includes/inventory/product.php';
 
 // Initialize session
 $session = new Session();
@@ -10,499 +11,479 @@ $session->init();
 
 // Check if user is logged in
 if (!$session->get('login')) {
-    header('Location: /ABICO/login.php');
+    header('Location: /abico/login.php');
     exit();
 }
 
 // Initialize database connection
-$database = new Database();
+$database = new dbconn();
 $db = $database->getConnection();
 
 // Initialize Product object
-$product = new Product($db);
-
-// Handle search
-$search = isset($_GET['search']) ? $_GET['search'] : '';
+$product = new product($db);
 
 // Get all products
-$stmt = $product->readAll($search);
+$stmt = $product->readAll();
 
-// Include template header and sidebar
-include __DIR__ . "/../templates/links.php";
+// Include template header, sidebar, and navigation
+include __DIR__ . "/../templates/header.php";
 include __DIR__ . "/../templates/sidebar.php";
+include __DIR__ . "/../templates/nav.php";
 ?>
 
-<div class="main-panel">
-    <?php include __DIR__ . "/../templates/header.php"; ?>
-    
-    <div class="content">
-        <div class="page-inner">
-            <div class="page-header">
-                <h4 class="page-title">Inventory Management</h4>
-                <ul class="breadcrumbs">
-                    <li class="nav-home">
-                        <a href="/ABICO">
-                            <i class="flaticon-home"></i>
-                        </a>
-                    </li>
-                    <li class="separator">
-                        <i class="flaticon-right-arrow"></i>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#">Inventory</a>
-                    </li>
-                </ul>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="d-flex align-items-center">
-                                <h4 class="card-title">Products</h4>
-                            </div>
+<div class="container">
+    <div class="page-inner">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <h4 class="card-title mb-0">
+                        <div class="btn-group" role="group">
+                            <a href="index.php" class="btn btn-outline-primary active">
+                                <i class="fas fa-users"></i> Inventory
+                            </a>
+                            <a href="activity_log.php" class="btn btn-outline-secondary">
+                                <i class="fas fa-history"></i> Activity Logs
+                            </a>
                         </div>
-                        <div class="card-body">
-                            <!-- Search and Add Product Section -->
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <form action="" method="get" class="form-inline">
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" name="search" placeholder="Search products..." value="<?php echo htmlspecialchars($search); ?>">
-                                            <div class="input-group-append">
-                                                <button class="btn btn-outline-secondary" type="submit">
-                                                    <i class="fa fa-search"></i>
-                                                </button>
-                                                <?php if (!empty($search)): ?>
-                                                    <a href="index.php" class="btn btn-outline-danger">
-                                                        <i class="fa fa-times"></i>
-                                                    </a>
-                                                <?php endif; ?>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-                                <div class="col-md-6 text-end">
-                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                                        <i class="fa fa-plus"></i> Add New Product
+                    </h4>
+                </div>
+
+                <button class="btn btn-primary btn-round" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                    <i class="fas fa-plus me-2"></i>Add new item
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="inventoryTable" class="table table-hover table-striped" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>  
+                                <th>Description</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php $count = 1; ?>
+                            <?php while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) { ?>
+                            <tr>
+                                <td><?php echo $count++; ?></td>
+                                <td><?php echo htmlspecialchars(mb_strimwidth($row['product_name'], 0, 20, "...")); ?></td>
+                                <td><?php echo htmlspecialchars(mb_strimwidth($row['description'], 0, 20, "...")); ?></td>
+                                <td data-order="<?php echo $row['price']; ?>">₱<?php echo number_format($row['price'], 2); ?></td>
+                                <td><?php echo $row['quantity']; ?></td>
+                                <td>
+                                    <div class="d-flex">
+                                    <button class="btn btn-primary btn-sm me-2 edit-product"
+                                            data-id="<?php echo $row['id']; ?>"
+                                            data-name="<?php echo htmlspecialchars($row['product_name']); ?>"
+                                            data-description="<?php echo htmlspecialchars($row['description']); ?>"
+                                            data-quantity="<?php echo $row['quantity']; ?>"
+                                            data-price="<?php echo $row['price']; ?>">
+                                        <i class="fas fa-edit"></i>
                                     </button>
-                                </div>
-                            </div>
-
-                            <!-- Products Table -->
-                            <div class="table-responsive">
-                                <table id="productTable" class="display table table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Product Name</th>
-                                            <th>Description</th>
-                                            <th>Quantity</th>
-                                            <th>Price</th>
-                                            <th>Created At</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php while ($row = $stmt->fetch(PDO::FETCH_ASSOC)): ?>
-                                            <tr>
-                                                <td><?php echo htmlspecialchars($row['id']); ?></td>
-                                                <td><?php echo htmlspecialchars($row['product_name']); ?></td>
-                                                <td><?php echo htmlspecialchars($row['description']); ?></td>
-                                                <td class="text-right"><?php echo number_format($row['quantity']); ?></td>
-                                                <td class="text-right">₱<?php echo number_format($row['price'], 2); ?></td>
-                                                <td><?php echo date('M d, Y', strtotime($row['created_at'])); ?></td>
-                                                <td class="text-center">
-                                                    <div class="btn-group" role="group">
-                                                        <button class="btn btn-warning btn-sm edit-btn" 
-                                                                data-id="<?php echo $row['id']; ?>"
-                                                                data-name="<?php echo htmlspecialchars($row['product_name']); ?>"
-                                                                data-desc="<?php echo htmlspecialchars($row['description']); ?>"
-                                                                data-quantity="<?php echo $row['quantity']; ?>"
-                                                                data-price="<?php echo $row['price']; ?>"
-                                                                data-toggle="tooltip" title="Edit">
-                                                            <i class="fa fa-edit"></i>
-                                                        </button>
-                                                        <button class="btn btn-danger btn-sm delete-btn" 
-                                                                data-id="<?php echo $row['id']; ?>"
-                                                                data-name="<?php echo htmlspecialchars($row['product_name']); ?>"
-                                                                data-toggle="tooltip" title="Delete">
-                                                            <i class="fa fa-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        <?php endwhile; ?>
-                                        <?php if ($stmt->rowCount() === 0): ?>
-                                            <tr>
-                                                <td colspan="7" class="text-center">No products found.</td>
-                                            </tr>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Product Modal -->
-    <div class="modal fade" id="addProductModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add New Product</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form id="addProductForm" action="actions/add_product.php" method="post">
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="product_name">Product Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="product_name" name="product_name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="description">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="2"></textarea>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="quantity">Quantity <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control" id="quantity" name="quantity" min="0" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="price">Price <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text">₱</span>
-                                        </div>
-                                        <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" required>
+                                        <button class="btn btn-danger btn-sm delete-product" 
+                                                data-id="<?php echo $row['id']; ?>"
+                                                data-name="<?php echo htmlspecialchars($row['product_name']); ?>">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save Product</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Product Modal -->
-    <div class="modal fade" id="editProductModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Product</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form id="editProductForm" action="actions/update_product.php" method="post">
-                    <input type="hidden" name="id" id="edit_id">
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="edit_product_name">Product Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="edit_product_name" name="product_name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="edit_description">Description</label>
-                            <textarea class="form-control" id="edit_description" name="description" rows="2"></textarea>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="edit_quantity">Quantity <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control" id="edit_quantity" name="quantity" min="0" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="edit_price">Price <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text">₱</span>
-                                        </div>
-                                        <input type="number" class="form-control" id="edit_price" name="price" min="0" step="0.01" required>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Update Product</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirm Delete</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to delete <strong id="deleteProductName"></strong>?</p>
-                    <p class="text-danger">This action cannot be undone.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <form id="deleteForm" action="actions/delete_product.php" method="post" style="display: inline-block;">
-                        <input type="hidden" name="id" id="delete_id">
-                        <button type="submit" class="btn btn-danger">Delete</button>
-                    </form>
+                                </td>
+                            </tr>
+                            <?php } ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
-
-    <?php include __DIR__ . "/../templates/footer.php"; ?>
 </div>
 
-<!--   Core JS Files   -->
-<script src="/ABICO/assets/js/core/jquery-3.7.1.min.js"></script>
-<script src="/ABICO/assets/js/core/popper.min.js"></script>
-<script src="/ABICO/assets/js/core/bootstrap.min.js"></script>
-<!-- Datatables -->
-<script src="/ABICO/assets/js/plugin/datatables/datatables.min.js"></script>
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-semibold">Add New Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/abico/includes/inventory/add_product.php" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-medium">Product Name</label>
+                        <input type="text" class="form-control form-control-sm" name="product_name" placeholder="e.g., Premium White Sugar" required>
+                    </div>
+                    <div class="border rounded p-3 mb-3">
+                        <h6 class="mb-3 pb-1 border-bottom fw-semibold text-uppercase small text-muted">Product Details</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Product Type</label>
+                                    <select class="form-select" name="product_type" id="productType" required>
+                                    <option value="">-- Select Product Type --</option>
+                                    <optgroup label="Weight">
+                                        <option value="gram">Gram (g)</option>
+                                        <option value="kilo">Kilogram (kg)</option>
+                                    </optgroup>
+                                    <optgroup label="Volume">
+                                        <option value="liter">Liter (L)</option>
+                                        <option value="ml">Milliliter (ml)</option>
+                                    </optgroup>
+                                    <optgroup label="Count">
+                                        <option value="piece">Piece (pc)</option>
+                                        <option value="dozen">Dozen</option>
+                                        <option value="set">Set</option>
+                                        <option value="tray">Tray</option>
+                                    </optgroup>
+                                    <optgroup label="Containers">
+                                        <option value="bottle">Bottle</option>
+                                        <option value="can">Can</option>
+                                        <option value="box">Box</option>
+                                        <option value="pack">Pack</option>
+                                        <option value="sachet">Sachet</option>
+                                        <option value="pouch">Pouch</option>
+                                        <option value="bar">Bar</option>
+                                        <option value="cup">Cup</option>
+                                        <option value="roll">Roll</option>
+                                        <option value="stick">Stick</option>
+                                        <option value="tetra">Tetra Pack</option>
+                                    </optgroup>
+                                    <option value="other">-- Other --</option>
+                                    </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label d-flex justify-content-between">
+                                    <span>Quantity</span>
+                                    <span class="text-muted small" id="unitHelp">per item</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" name="product_quantity" id="productQuantity" min="0.01" step="0.01" value="1" required>
+                                    <span class="input-group-text bg-light" id="typeUnit">pc</span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div id="otherProductType" class="d-none">
+                                    <div class="border-top pt-3">
+                                        <label class="form-label">Specify Product Type</label>
+                                        <input type="text" class="form-control" name="other_product_type" placeholder="Enter custom product type">
+                                    </div>
+                                </div>
+                                <div id="piecesPerPackContainer" style="display: none;">
+                                    <div class="border-top pt-3">
+                                        <label class="form-label">Pieces per Pack</label>
+                                        <input type="number" class="form-control" name="pieces_per_pack" id="piecesPerPack" min="1" value="1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border rounded p-3 mb-3">
+                        <h6 class="mb-3 pb-1 border-bottom fw-semibold text-uppercase small text-muted">Inventory Details</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Stock Quantity</label>
+                                <input type="number" class="form-control" name="quantity" placeholder="Enter quantity" min="0" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Price</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₱</span>
+                                    <input type="number" class="form-control" name="price" placeholder="Enter price" min="0" step="0.01" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-sm btn-primary px-3">
+                        <i class="fas fa-save me-1"></i> Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Product Modal -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editProductForm" action="/abico/includes/inventory/update_product.php" method="POST">
+                <input type="hidden" name="id" id="editProductId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Product Name</label>
+                        <input type="text" class="form-control" name="product_name" id="editProductName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" id="editProductDescription" rows="2"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" class="form-control" name="quantity" id="editProductQuantity" min="0" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Price</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₱</span>
+                                <input type="number" class="form-control" name="price" id="editProductPrice" min="0" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Update Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<?php include __DIR__ . "/../templates/footer.php"; ?>
+<?php include __DIR__ . "/../templates/scripts.php"; ?>
+
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-<script>
-    $(document).ready(function() {
-        // Initialize DataTable
-        var table = $('#productTable').DataTable({
-            "pageLength": 10,
-            "order": [[0, "desc"]],
-            "columnDefs": [
-                { "orderable": false, "targets": [6] } // Disable sorting on actions column
-            ]
-        });
-
-        // Initialize tooltips
-        $('[data-toggle="tooltip"]').tooltip();
-        
-        // Initialize modals
-        const addProductModalEl = document.getElementById('addProductModal');
-        const editProductModalEl = document.getElementById('editProductModal');
-        const deleteProductModalEl = document.getElementById('deleteModal');
-        
-        // Initialize Bootstrap modals
-        const addProductModal = new bootstrap.Modal(addProductModalEl);
-        const editProductModal = new bootstrap.Modal(editProductModalEl);
-        const deleteProductModal = new bootstrap.Modal(deleteProductModalEl);
-        
-        // Reset form when modal is about to be shown
-        addProductModalEl.addEventListener('show.bs.modal', function (event) {
-            document.getElementById('addProductForm').reset();
-        });
-        
-        // Handle edit button click
-        $(document).on('click', '.edit-btn', function() {
-            var id = $(this).data('id');
-            var name = $(this).data('name');
-            var desc = $(this).data('desc');
-            var quantity = $(this).data('quantity');
-            var price = $(this).data('price');
-            
-            $('#edit_id').val(id);
-            $('#edit_product_name').val(name);
-            $('#edit_description').val(desc);
-            $('#edit_quantity').val(quantity);
-            $('#edit_price').val(price);
-            
-            editProductModal.show();
-        });
-        
-        // Handle delete button click
-        $(document).on('click', '.delete-btn', function() {
-            var id = $(this).data('id');
-            var name = $(this).data('name');
-            
-            $('#delete_id').val(id);
-            $('#deleteProductName').text(name);
-            
-            deleteProductModal.show();
-        });
-        
-                // Handle add product form submission
-        $('#addProductForm').on('submit', function(e) {
-            e.preventDefault();
-            const form = $(this);
-            const submitBtn = form.find('button[type="submit"]');
-            const originalBtnText = submitBtn.html();
-            
-            // Show loading state
-            submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
-            
-            $.ajax({
-                url: 'actions/add_product.php',
-                type: 'POST',
-                data: form.serialize(),
-                dataType: 'json',
-                success: function(response) {
-                    if (response.status === 'success') {
-                        // Show success message
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success!',
-                            text: response.message || 'Product added successfully!',
-                            timer: 1500,
-                            showConfirmButton: false
-                        }).then(() => {
-                            // Hide modal
-                            const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
-                            modal.hide();
-                            
-                            // Refresh the page to show the new product
-                            location.reload();
-                        });
-                    } else {
-                        // Show error message
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error!',
-                            text: response.message || 'An error occurred while adding the product.'
-                        });
-                        
-                        // Re-enable the submit button
-                        submitBtn.prop('disabled', false).html(originalBtnText);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    // Show error message
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error!',
-                        text: 'An error occurred while adding the product. Please try again.'
-                    });
-                    
-                    // Re-enable the submit button
-                    submitBtn.prop('disabled', false).html(originalBtnText);
-                    
-                    console.error('Error:', error);
-                }
-            });
-        });
-        
-        // Handle edit form submission
-        $('#editProductForm').on('submit', function(e) {
-            e.preventDefault();
-            var form = $(this);
-            
-            $.ajax({
-                url: form.attr('action'),
-                type: 'POST',
-                data: form.serialize(),
-                dataType: 'json',
-                success: function(response) {
-                    if (response.status === 'success') {
-                        // Show success message
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success!',
-                            text: response.message || 'Product updated successfully!',
-                            timer: 1500,
-                            showConfirmButton: false
-                        }).then(() => {
-                            location.reload();
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error!',
-                            text: response.message || 'Something went wrong.'
-                        });
-                    }
-                },
-                error: function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error!',
-                        text: 'Failed to update the product. Please try again.'
-                    });
-                },
-                complete: function() {
-                    $('#editProductModal').modal('hide');
-                }
-            });
-        });
-        
-        // Handle delete form submission
-        $('#deleteForm').on('submit', function(e) {
-            e.preventDefault();
-            var form = $(this);
-            
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: form.attr('action'),
-                        type: 'POST',
-                        data: form.serialize(),
-                        dataType: 'json',
-                        success: function(response) {
-                            if (response.status === 'success') {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Deleted!',
-                                    text: response.message,
-                                    timer: 1500,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    location.reload();
-                                });
-                            } else {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Error!',
-                                    text: response.message || 'Something went wrong.'
-                                });
-                            }
-                        },
-                        error: function() {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error!',
-                                text: 'Failed to delete the product. Please try again.'
-                            });
-                        },
-                        complete: function() {
-                            $('#deleteModal').modal('hide');
-                        }
-                    });
-                }
-            });
-        });
-        
-        // Reset form when modal is closed
-        $('.modal').on('hidden.bs.modal', function() {
-            $(this).find('form').trigger('reset');
-        });
-    });
+<!-- DataTables JS -->
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js">
 </script>
 
+<script>
+$(document).ready(function() {
+    // Update unit display and handle product type changes
+    function updateUnitDisplay() {
+        const type = $('#productType').val();
+        let unit = 'pc';
+        let unitHelp = 'per item';
+        
+        // Show/hide pieces per pack
+        if (type === 'pack') {
+            $('#piecesPerPackContainer').show();
+            unit = 'pack';
+            unitHelp = 'per pack';
+        } else {
+            $('#piecesPerPackContainer').hide();
+            unitHelp = 'per ' + (type || 'item');
+        }
+        
+        // Handle unit display
+        switch(type) {
+            case 'gram': unit = 'g'; break;
+            case 'kilo': unit = 'kg'; break;
+            case 'liter': unit = 'L'; break;
+            case 'ml': unit = 'ml'; break;
+            case 'piece': unit = 'pc'; break;
+            case 'other': 
+                unit = ''; 
+                $('#otherProductType').removeClass('d-none');
+                unitHelp = 'per unit';
+                break;
+            default: 
+                if (type !== 'pack') {
+                    unit = 'pc';
+                }
+                $('#otherProductType').addClass('d-none');
+        }
+        
+        $('#typeUnit').text(unit);
+        $('#unitHelp').text(unitHelp);
+    }
+    
+    // Initialize unit display
+    updateUnitDisplay();
+    
+    // Update unit when type changes
+    $('#productType').on('change', updateUnitDisplay);
 
+
+
+    // Initialize DataTable
+    var table = $('#inventoryTable').DataTable({
+        "pageLength": 10, // Default number of entries
+        "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]], // Entries dropdown
+        "order": [[0, 'asc']], // Default sorting by first column
+        "responsive": true,
+        "language": {
+            "search": "_INPUT_",
+            "searchPlaceholder": "Search products...",
+            "lengthMenu": "Show _MENU_ entries",
+            "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+            "infoEmpty": "Showing 0 to 0 of 0 entries",
+            "infoFiltered": "(filtered from _MAX_ total entries)",
+            "paginate": {
+                "first": "First",
+                "last": "Last",
+                "next": "Next",
+                "previous": "Previous"
+            }
+        },
+        "columnDefs": [
+            { "orderable": false, "targets": [5] } // Disable sorting on Actions column
+        ]
+    });
+
+    // Add custom search input
+    $('.dataTables_filter input').addClass('form-control mb-3');
+    
+    // Add custom length menu
+    $('.dataTables_length select').addClass('form-select mb-3');
+    
+    // Style pagination
+    $('.dataTables_paginate').addClass('mt-3');
+    
+    // Edit product functionality
+    $('.edit-product').on('click', function() {
+        const productId = $(this).data('id');
+        const productName = $(this).data('name');
+        const productDesc = $(this).data('description');
+        const productQty = $(this).data('quantity');
+        const productPrice = $(this).data('price');
+        
+        // Populate the edit form
+        $('#editProductId').val(productId);
+        $('#editProductName').val(productName);
+        $('#editProductDescription').val(productDesc);
+        $('#editProductQuantity').val(productQty);
+        $('#editProductPrice').val(productPrice);
+        
+        // Show the modal
+        const editModal = new bootstrap.Modal(document.getElementById('editProductModal'));
+        editModal.show();
+    });
+    
+    // Handle edit form submission
+    $('#editProductForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        $.ajax({
+            url: $(this).attr('action'),
+            type: 'POST',
+            data: $(this).serialize(),
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: response.message || 'Product updated successfully',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: response.message || 'Failed to update product',
+                    });
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'An error occurred while updating the product',
+                });
+            }
+        });
+    });
+    
+    // Delete product functionality
+    $('.delete-product').on('click', function(e) {
+        e.preventDefault();
+        
+        const productId = $(this).data('id');
+        const productName = $(this).data('name');
+        
+        Swal.fire({
+            title: 'Delete Product',
+            text: `Are you sure you want to delete "${productName}"? This action cannot be undone.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Send delete request
+                $.ajax({
+                    url: '/abico/includes/inventory/delete_product.php',
+                    type: 'POST',
+                    data: { id: productId },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire(
+                                'Deleted!',
+                                response.message || 'The product has been deleted.',
+                                'success'
+                            ).then(() => {
+                                // Reload the page to reflect changes
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire(
+                                'Error!',
+                                response.message || 'Failed to delete product.',
+                                'error'
+                            );
+                        }
+                    },
+                    error: function() {
+                        Swal.fire(
+                            'Error!',
+                            'An error occurred while deleting the product.',
+                            'error'
+                        );
+                    }
+                });
+            }
+        });
+    });
+});
+</script>
+
+<?php
+// Display SweetAlert if there's a message in the session
+if (isset($_SESSION['alert'])) {
+    $alert = $_SESSION['alert'];
+    unset($_SESSION['alert']); // Clear the message after displaying
+    ?>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        Swal.fire({
+            title: '<?php echo addslashes($alert['title']); ?>',
+            text: '<?php echo addslashes($alert['message']); ?>',
+            icon: '<?php echo $alert['icon']; ?>',
+            confirmButtonText: 'OK',
+            timer: 3000,
+            timerProgressBar: true,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false
+        });
+    });
+    </script>
+    <?php
+}
+?>
+
+</body>
+</html>

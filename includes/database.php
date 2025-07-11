@@ -1,5 +1,5 @@
 <?php
-class Database {
+class dbconn {
     private $host = "localhost";
     private $db_name = "abico_store";
     private $username = "root";

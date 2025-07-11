@@ -1,5 +1,12 @@
 <?php
-class Session {
+// Handle logout request
+if (isset($_GET['destroy']) && $_GET['destroy'] == 1) {
+    require_once 'session.php';
+    session::init();
+    session::destroy();
+}
+
+class session {
     public static function init() {
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
@@ -17,7 +24,7 @@ class Session {
     public static function destroy() {
         session_destroy();
         session_unset();
-        header("Location: login.php");
+        header("Location: /abico/login.php");
         exit();
     }
     
@@ -28,3 +35,6 @@ class Session {
         }
     }
 }
+
+
+// Checks if may naka log nga user or not. Initializes new session whenever may bag o nga user nga nakalog in
