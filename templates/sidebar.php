@@ -64,7 +64,7 @@
           </a>
         </li>
         <li class="nav-item">
-          <a href="/ABICO/l/index.php">
+          <a href="<?= $base; ?>/includes/session.php?destroy=1">
             <i class="fa-solid fa-power-off"></i>
             <p>Logout</p>
           </a>

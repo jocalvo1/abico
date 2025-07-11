@@ -110,14 +110,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <label for="username" class="form-label">Username</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-user"></i></span>
-                        <input type="text" class="form-control" id="username" name="username" required autofocus>
+                        <input type="text" class="form-control" id="username" name="username" placeholder="Enter username" required autofocus>
                     </div>
                 </div>
                 <div class="mb-4">
                     <label for="password" class="form-label">Password</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                        <input type="password" class="form-control" id="password" name="password" required>
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary w-100 btn-login">
@@ -126,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </form>
             
             <div class="text-center mt-3">
-                <small class="text-muted">ABICO Store &copy; <?php echo date('Y'); ?></small>
+                <small class="text-muted">ABICO Store | <?php echo date('Y'); ?></small>
             </div>
         </div>
     </div>

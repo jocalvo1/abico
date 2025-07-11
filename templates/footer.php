@@ -2,7 +2,7 @@
         <footer class="footer">
           <div class="container-fluid d-flex justify-content-between">
             <div class="copyright">
-              ABICO Store | 2025
+              ABICO Store | <?php echo date('Y'); ?>
             </div>
           </div>
         </footer>

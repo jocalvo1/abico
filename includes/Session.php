@@ -1,4 +1,11 @@
 <?php
+// Handle logout request
+if (isset($_GET['destroy']) && $_GET['destroy'] == 1) {
+    require_once 'session.php';
+    session::init();
+    session::destroy();
+}
+
 class session {
     public static function init() {
         if (session_status() == PHP_SESSION_NONE) {
@@ -17,7 +24,7 @@ class session {
     public static function destroy() {
         session_destroy();
         session_unset();
-        header("Location: login.php");
+        header("Location: ../login.php");
         exit();
     }
     
