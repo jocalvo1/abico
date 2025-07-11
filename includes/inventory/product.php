@@ -1,5 +1,5 @@
 <?php
-class Product {
+class product {
     private $conn;
     private $table_name = "products";
 
@@ -49,21 +49,9 @@ class Product {
     }
 
     // Read all products
-    public function readAll($search = '') {
-        $query = "SELECT * FROM " . $this->table_name;
-        
-        if (!empty($search)) {
-            $query .= " WHERE product_name LIKE :search OR description LIKE :search";
-        }
-        
-        $query .= " ORDER BY created_at DESC";
+    public function readAll() {
+        $query = "SELECT * FROM " . $this->table_name . " ORDER BY created_at ASC";
         $stmt = $this->conn->prepare($query);
-        
-        if (!empty($search)) {
-            $search = "%$search%";
-            $stmt->bindParam(':search', $search);
-        }
-        
         $stmt->execute();
         return $stmt;
     }
