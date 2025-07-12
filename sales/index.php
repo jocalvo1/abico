@@ -35,6 +35,7 @@ include __DIR__ . "/../templates/nav.php";
                 <th>ID</th>
                 <th>Date</th>
                 <th>Name</th>
+                <th>items</th>
                 <th>Total</th>
                 <th>Action</th>
               </tr>
@@ -45,6 +46,7 @@ include __DIR__ . "/../templates/nav.php";
                 <td>TRX-123456</td>
                 <td>Jan 12, 2023</td>
                 <td>John Doe</td>
+                <td>4</td>
                 <td>&#8369; 1,200.00</td>
                 <td>
                   <div class="d-flex gap-2">
@@ -58,6 +60,7 @@ include __DIR__ . "/../templates/nav.php";
                 <td>TRX-789012</td>
                 <td>Jan 11, 2023</td>
                 <td>Jane Doe</td>
+                <td>2</td>
                 <td>&#8369; 1,500.00</td>
                 <td>
                   <div class="d-flex gap-2">
