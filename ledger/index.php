@@ -18,19 +18,16 @@ include __DIR__ . "/../templates/nav.php";
 ?>
 <div class="container">
   <div class="page-inner">
-    <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row pt-2 pb-4">
-      <div>
-        <h3 class="fw-bold mb-3">Ledger</h3>
-      </div>
-      <div class="ms-md-auto py-2 py-md-0">
-        <button class="btn btn-primary btn-round">
-          <i class="fas fa-plus me-2"></i>New Entry
-        </button>
-      </div>
-    </div>
-    
-    <!-- Ledger Content Here -->
+    <!-- Ledger Card -->
     <div class="card">
+      <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <h4 class="card-title fw-bold m-0">Ledger</h4>
+          <button class="btn btn-primary btn-round">
+            <i class="fas fa-plus me-2"></i>Add new customer
+          </button>
+        </div>
+      </div>
       <div class="card-body">
         <p class="text-muted">Ledger content will go here.</p>
       </div>
@@ -39,9 +36,9 @@ include __DIR__ . "/../templates/nav.php";
   </div>
 </div>
 
-<?php include __DIR__ . "/templates/footer.php"; ?>
+<?php include __DIR__ . "/../templates/footer.php"; ?>
 </div>
   <!--   Core JS Files   -->
-  <?php include __DIR__ . "/templates/scripts.php"; ?>
+  <?php include __DIR__ . "/../templates/scripts.php"; ?>
 </body>
 </html>
