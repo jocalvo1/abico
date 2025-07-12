@@ -1,8 +1,8 @@
 <?php
 // Include required files
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/Session.php';
-require_once __DIR__ . '/includes/Customer.php';
+require_once __DIR__ . '/../includes/database.php';
+require_once __DIR__ . '/../includes/session.php';
+require_once __DIR__ . '/../includes/ledger/customer_list.php';
 
 // Initialize session
 $session = new Session();
@@ -15,7 +15,7 @@ if (!$session->get('login')) {
 }
 
 // Initialize database connection
-$database = new Database();
+$database = new dbconn();
 $db = $database->getConnection();
 
 // Initialize Customer object
@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($customer->create()) {
             // Log the activity
-            require_once __DIR__ . '/includes/ActivityLog.php';
+            require_once __DIR__ . '/../includes/ledger/activity_log.php';
             $activityLog = new ActivityLog($db);
             $activityLog->log($db, $_SESSION['user_id'], $db->lastInsertId(), 'create_customer', 'Added new customer: ' . $customer->customer_name);
             
@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             // Log the activity
-            require_once __DIR__ . '/includes/ActivityLog.php';
+            require_once __DIR__ . '/../includes/ledger/activity_log.php';
             $activityLog = new ActivityLog($db);
             $logResult = $activityLog->log(
                 $db, 
@@ -152,33 +152,13 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_customer' && isset($_GET[
 // Get all customers
 $stmt = $customer->readAll($search);
 
-// Include template header and sidebar
-include __DIR__ . "/../templates/links.php";
+include __DIR__ . "/../templates/header.php";
 include __DIR__ . "/../templates/sidebar.php";
+include __DIR__ . "/../templates/nav.php";
 ?>
 
-<div class="main-panel">
-    <?php include __DIR__ . "/../templates/header.php"; ?>
-    
-    <div class="content">
+    <div class="container">
         <div class="page-inner">
-            <div class="page-header">
-                <h4 class="page-title">Customer Ledger</h4>
-                <ul class="breadcrumbs">
-                    <li class="nav-home">
-                        <a href="/ABICO">
-                            <i class="flaticon-home"></i>
-                        </a>
-                    </li>
-                    <li class="separator">
-                        <i class="flaticon-right-arrow"></i>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#">Ledger</a>
-                    </li>
-                </ul>
-            </div>
-            
             <div class="row">
                 <div class="col-md-12">
                     <div class="card">
@@ -245,7 +225,7 @@ include __DIR__ . "/../templates/sidebar.php";
                                 <table id="customerTable" class="table table-striped table-hover">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
+                                            <th>#</th>
                                             <th>Customer Name</th>
                                             <th>Contact</th>
                                             <th class="text-right">Debt</th>
@@ -263,12 +243,15 @@ include __DIR__ . "/../templates/sidebar.php";
                                                 <td><?php echo date('M d, Y', strtotime($row['created_at'])); ?></td>
                                                 <td>
                                                     <div class="action-buttons">
+                                                        <a href="history.php?id=<?php echo $row['id']; ?>" class="btn btn-success btn-sm" title="View Payment History">
+                                                            <i class="fa fa-history"></i>
+                                                        </a>
                                                         <button class="btn btn-warning btn-sm edit-debt-btn" 
                                                                 data-id="<?php echo $row['id']; ?>"
                                                                 data-name="<?php echo htmlspecialchars($row['customer_name']); ?>"
                                                                 data-debt="<?php echo $row['debt']; ?>"
                                                                 data-toggle="tooltip" title="Update Debt">
-                                                            <i class="fa fa-edit"></i> Update Debt
+                                                            <i class="fa fa-edit"></i>
                                                         </button>
                                                     </div>
                                                 </td>
@@ -282,160 +265,151 @@ include __DIR__ . "/../templates/sidebar.php";
                 </div>
             </div>
         </div>
-=======
-<div class="container">
-  <div class="page-inner">
-    <!-- Ledger Card -->
-    <div class="card">
-      <div class="card-header">
-        <div class="d-flex justify-content-between align-items-center">
-          <h4 class="card-title fw-bold m-0">Ledger</h4>
-          <button class="btn btn-primary btn-round">
-            <i class="fas fa-plus me-2"></i>Add new customer
-          </button>
-        </div>
-      </div>
-      <div class="card-body">
-        <p class="text-muted">Ledger content will go here.</p>
-      </div>
-    </div>
-</div>
-    <!-- Footer -->
-    <?php include __DIR__ . "/../templates/footer.php"; ?>
 
-    <!-- Add Customer Modal -->
-    <div class="modal fade" id="addCustomerModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add New Customer</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form id="addCustomerForm" method="POST" action="">
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="customer_name">Customer Name *</label>
-                            <input type="text" class="form-control" id="customer_name" name="customer_name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="contact">Contact Number</label>
-                            <input type="text" class="form-control" id="contact" name="contact">
-                        </div>
+        <!-- Add Customer Modal -->
+        <div class="modal fade" id="addCustomerModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add New Customer</h5>
+                        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save Customer</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Update Debt Modal -->
-    <div class="modal fade" id="updateDebtModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Update Customer Debt</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form id="updateDebtForm" method="POST" action="">
-                    <input type="hidden" name="update_debt" value="1">
-                    <input type="hidden" name="customer_id" id="debt_customer_id">
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="customer_name">Customer Name</label>
-                            <input type="text" class="form-control" id="debt_customer_name" readonly>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Current Debt (₱)</label>
-                            <input type="text" class="form-control font-weight-bold" id="current_debt" readonly>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Update Type</label>
-                            <div class="btn-group btn-group-toggle w-100 mb-3" data-toggle="buttons">
-                                <label class="btn btn-outline-success">
-                                    <input type="radio" name="update_type" value="partial" checked> Partial Payment
-                                </label>
-                                <label class="btn btn-outline-primary">
-                                    <input type="radio" name="update_type" value="full"> Pay in Full
-                                </label>
-                                <label class="btn btn-outline-warning">
-                                    <input type="radio" name="update_type" value="adjust"> Adjust Balance
-                                </label>
+                    <form id="addCustomerForm" method="POST" action="">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="customer_name">Customer Name *</label>
+                                <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contact">Contact Number</label>
+                                <input type="text" class="form-control" id="contact" name="contact">
                             </div>
                         </div>
-                        
-                        <div id="partial_payment_section">
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Save Customer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Update Debt Modal -->
+        <div class="modal fade" id="updateDebtModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Update Customer Debt</h5>
+                        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form id="updateDebtForm" method="POST" action="">
+                        <input type="hidden" name="update_debt" value="1">
+                        <input type="hidden" name="customer_id" id="debt_customer_id">
+                        <div class="modal-body">
                             <div class="form-group">
-                                <label for="payment_amount">Payment Amount (₱)</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">-</span>
-                                    </div>
-                                    <input type="number" class="form-control" id="payment_amount" step="0.01" min="0.01" placeholder="Enter payment amount">
+                                <label for="customer_name">Customer Name</label>
+                                <input type="text" class="form-control" id="debt_customer_name" readonly>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Current Debt (₱)</label>
+                                <input type="text" class="form-control font-weight-bold" id="current_debt" readonly>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Update Type</label>
+                                <div class="btn-group btn-group-toggle w-100 mb-3" data-toggle="buttons">
+                                    <label class="btn btn-outline-success">
+                                        <input type="radio" name="update_type" value="partial" checked> Partial Payment
+                                    </label>
+                                    <label class="btn btn-outline-primary">
+                                        <input type="radio" name="update_type" value="full"> Pay in Full
+                                    </label>
+                                    <label class="btn btn-outline-warning">
+                                        <input type="radio" name="update_type" value="adjust"> Adjust Balance
+                                    </label>
                                 </div>
-                                <small class="form-text text-muted">Amount to be deducted from current debt</small>
                             </div>
-                            <div class="form-group">
-                                <label for="new_debt">New Debt (₱)</label>
-                                <input type="number" class="form-control font-weight-bold" id="new_debt" name="debt" readonly>
+                            
+                            <div id="partial_payment_section">
+                                <div class="form-group">
+                                    <label for="payment_amount">Payment Amount (₱)</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">-</span>
+                                        </div>
+                                        <input type="number" class="form-control" id="payment_amount" step="0.01" min="0.01" placeholder="Enter payment amount">
+                                    </div>
+                                    <small class="form-text text-muted">Amount to be deducted from current debt</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="new_debt">New Debt (₱)</label>
+                                    <input type="number" class="form-control font-weight-bold" id="new_debt" name="debt" readonly>
+                                </div>
                             </div>
+                            
+                            <div id="adjust_balance_section" style="display: none;">
+                                <div class="form-group">
+                                    <label for="new_balance">Set New Balance (₱)</label>
+                                    <input type="number" class="form-control" id="new_balance" step="0.01" min="0">
+                                    <small class="form-text text-muted">Enter the new total debt amount</small>
+                                </div>
+                            </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Update Debt</button>
                         </div>
-                        
-                        <div id="adjust_balance_section" style="display: none;">
-                            <div class="form-group">
-                                <label for="new_balance">Set New Balance (₱)</label>
-                                <input type="number" class="form-control" id="new_balance" step="0.01" min="0">
-                                <small class="form-text text-muted">Enter the new total debt amount</small>
-                            </div>
-                        </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Update Debt</button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 
+<?php include __DIR__ . "/../templates/footer.php"; ?>
 </div>
-
-<!--   Core JS Files   -->
-<script src="/ABICO/assets/js/core/jquery-3.7.1.min.js"></script>
-<script src="/ABICO/assets/js/core/popper.min.js"></script>
-<!-- SweetAlert2 -->
-<script src="/ABICO/assets/js/plugin/sweetalert/sweetalert2.all.min.js"></script>
-<script src="/ABICO/assets/js/core/bootstrap.min.js"></script>
-<script src="/ABICO/assets/js/plugin/datatables/datatables.min.js"></script>
+  <!--   Core JS Files   -->
+  <?php include __DIR__ . "/../templates/scripts.php"; ?>
+</body>
 
 <script>
+    // Initialize modals
+    $('.modal').on('hidden.bs.modal', function () {
+        $(this).find('form').trigger('reset');
+    });
+
     $(document).ready(function() {
         // Initialize DataTable
         var table = $('#customerTable').DataTable({
-            "pageLength": 10,
-            "order": [[0, "desc"]],
-            "language": {
-                "search": "",
-                "searchPlaceholder": "Search customers...",
-                "lengthMenu": "Show _MENU_ entries per page",
-                "info": "Showing _START_ to _END_ of _TOTAL_ entries",
-                "infoEmpty": "No entries found",
-                "infoFiltered": "(filtered from _MAX_ total entries)",
-                "paginate": {
-                    "previous": "<i class='fas fa-chevron-left'></i>",
-                    "next": "<i class='fas fa-chevron-right'></i>"
+            responsive: true,
+            order: [[0, 'desc']],
+            pageLength: 10, // Default number of entries to show
+            lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, 'All']],
+            columnDefs: [
+                { orderable: false, targets: -1 },
+                { className: 'text-right', targets: [3, 4] },
+                { className: 'text-center', targets: [0, 2] }
+            ],
+            language: {
+                search: 'Search customers:',
+                searchPlaceholder: 'Search by ID, name...',
+                lengthMenu: 'Show _MENU_ entries',
+                info: 'Showing _START_ to _END_ of _TOTAL_ entries',
+                infoEmpty: 'No entries found',
+                infoFiltered: '(filtered from _MAX_ total entries)',
+                paginate: {
+                    first: 'First',
+                    last: 'Last',
+                    next: 'Next',
+                    previous: 'Previous'
                 }
             },
-            "columnDefs": [
-                { "orderable": false, "targets": -1 }
-            ]
+            dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                 "<'row'<'col-sm-12'tr>>" +
+                 "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
         });
 
                 // Format number with 2 decimal places
@@ -597,9 +571,4 @@ include __DIR__ . "/../templates/sidebar.php";
         });
     });
 </script>
-<?php include __DIR__ . "/../templates/footer.php"; ?>
-</div>
-  <!--   Core JS Files   -->
-  <?php include __DIR__ . "/../templates/scripts.php"; ?>
-</body>
 </html>

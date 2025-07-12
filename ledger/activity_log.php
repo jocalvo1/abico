@@ -1,12 +1,12 @@
 <?php
 // Include required files
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/Session.php';
-require_once __DIR__ . '/includes/ActivityLog.php';
-require_once __DIR__ . '/includes/Customer.php';
+require_once __DIR__ . '/../includes/database.php';
+require_once __DIR__ . '/../includes/session.php';
+require_once __DIR__ . '/../includes/activity_log.php';
+require_once __DIR__ . '/../includes/customer.php';
 
 // Initialize session
-$session = new Session();
+$session = new session();
 $session->init();
 
 // Check if user is logged in
@@ -16,7 +16,7 @@ if (!$session->get('login')) {
 }
 
 // Initialize database connection
-$database = new Database();
+$database = new dbconn();
 $db = $database->getConnection();
 
 // Initialize ActivityLog object

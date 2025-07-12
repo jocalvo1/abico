@@ -1,3 +1,28 @@
+<?php
+// Start the session
+session_start();
+
+// Check if user is logged in, if not redirect to login page
+if(!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
+    header('location: /abico/login.php');
+    exit;
+}
+
+// Include database and classes
+require_once __DIR__ . '/../includes/database.php';
+require_once __DIR__ . '/../includes/inventory/product.php';
+require_once __DIR__ . '/../includes/ledger/customer_list.php';
+
+// Initialize the database connection
+$database = new dbconn();
+$db = $database->getConnection();
+
+// Create product object
+$product = new Product($db);
+
+// Fetch all products
+$products = $product->readAll();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,195 +31,295 @@
     <title>Create New Sale</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <style>
-        body {
+        .cart-item {
+            transition: all 0.3s ease;
+        }
+        .cart-item:hover {
             background-color: #f8f9fa;
         }
-        .transaction-container {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
-            padding: 20px;
-            margin-top: 20px;
-        }
-        .cart-summary {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-        .cart-items-container {
-            flex: 1;
-            overflow-y: auto;
-            max-height: 400px; /* Adjust this value as needed */
-            margin: 10px -15px;
-            padding: 0 15px;
-        }
-        .cart-item {
-            border-bottom: 1px solid #eee;
-            padding: 10px 0;
-        }
-        .payment-section {
-            display: none;
-            margin-top: 20px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-        .btn-checkout {
-            width: 100%;
-            padding: 10px;
-            font-size: 1.1em;
-            margin-top: 10px;
-        }
-        .total-amount {
-            font-size: 1.3em;
-            font-weight: bold;
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 2px solid #dee2e6;
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
 <body>
     <div class="container-fluid py-4">
-        <div class="row mb-3">
-            <div class="col-12">
-                <a href="index.php" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left me-2"></i>Return to Transactions
-                </a>
-            </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h3 mb-0">ABICO Store</h1>
+            <a href="index.php" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i>Back to Sales</a>
         </div>
+
         <div class="row">
+            <!-- Left Side -->
             <div class="col-md-8">
-                <div class="transaction-container">
-                    <h3><i class="fas fa-cash-register me-2"></i>New Sale</h3>
-                    <hr>
-                    
-                    <div class="mb-3">
-                        <label for="customerName" class="form-label">Customer's Name</label>
-                        <input type="text" class="form-control" id="customerName" placeholder="Enter customer name">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">New Sale</h4>
                     </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="productSearch" class="form-label">Search Product</label>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="customerSelect" class="form-label">Select Customer</label>
                             <div class="input-group">
-                                <input type="text" class="form-control" id="productSearch" placeholder="Search product by name or code">
-                                <button class="btn btn-outline-secondary" type="button" id="searchProduct">
-                                    <i class="fas fa-search"></i>
+                                <select class="form-select" id="customerSelect">
+                                    <option value="">Walk-in Customer</option>
+                                    <?php 
+                                    $customer = new Customer($db);
+                                    $stmt = $customer->readAll();
+                                    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                                        // Properly escape the JSON string
+                                        $customerData = htmlspecialchars(json_encode([
+                                            'id' => $row['id'],
+                                            'name' => $row['customer_name']
+                                        ]), ENT_QUOTES, 'UTF-8');
+                                        echo "<option value='{$customerData}'>{$row['customer_name']} ({$row['contact']})</option>";
+                                    }
+                                    ?>
+                                </select>
+                                <button class="btn btn-outline-success" type="button" id="newCustomerBtn" data-bs-toggle="modal" data-bs-target="#newCustomerModal">
+                                    <i class="fas fa-plus"></i> New
                                 </button>
                             </div>
+                            <input type="hidden" id="customerId" value="">
+                            <input type="hidden" id="customerName" value="Walk-in Customer">
                         </div>
-                        <div class="col-md-3">
-                            <label for="productQuantity" class="form-label">Quantity</label>
-                            <input type="number" class="form-control" id="productQuantity" value="1" min="1">
+                        
+                        <div class="table-responsive">
+                            <table id="productsTable" class="table table-hover" style="width:100%">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Price</th>
+                                        <th>Qty</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php while ($row = $products->fetch(PDO::FETCH_ASSOC)): ?>
+                                    <tr>
+                                        <td title="<?php echo htmlspecialchars($row['product_name']); ?>">
+                                            <?php 
+                                            $name = htmlspecialchars($row['product_name']);
+                                            echo strlen($name) > 20 ? substr($name, 0, 20) . '...' : $name; 
+                                            ?>
+                                        </td>
+                                        <td title="<?php echo htmlspecialchars($row['description']); ?>">
+                                            <?php 
+                                            $desc = htmlspecialchars($row['description']);
+                                            echo strlen($desc) > 20 ? substr($desc, 0, 20) . '...' : $desc; 
+                                            ?>
+                                        </td>
+                                        <td>₱<?php echo number_format($row['price'], 2); ?></td>
+                                        <td style="width: 120px;">
+                                            <div class="input-group input-group-sm">
+                                                <button class="btn btn-outline-secondary quantity-btn decrease">-</button>
+                                                <input type="number" 
+                                                       class="form-control text-center product-quantity" 
+                                                       value="1" 
+                                                       min="1" 
+                                                       max="<?php echo $row['quantity']; ?>"
+                                                       style="width: 50px;">
+                                                <button class="btn btn-outline-secondary quantity-btn increase">+</button>
+                                            </div>
+                                            <small class="text-muted">In stock: <?php echo $row['quantity']; ?></small>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary add-to-cart" 
+                                                    data-id="<?php echo $row['id']; ?>"
+                                                    data-name="<?php echo htmlspecialchars($row['product_name']); ?>" 
+                                                    data-price="<?php echo $row['price']; ?>"
+                                                    data-stock="<?php echo $row['quantity']; ?>">
+                                                <i class="fas fa-plus me-1"></i> Add
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <?php endwhile; ?>
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="col-md-3 d-flex align-items-end">
-                            <button class="btn btn-primary w-100" id="addToCart">
-                                <i class="fas fa-cart-plus me-2"></i>Add to Cart
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="table-responsive mt-3">
-                        <table class="table table-hover" id="productsTable">
-                            <thead>
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Description</th>
-                                    <th>Price</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Sample product row -->
-                                <tr>
-                                    <td>Sample Product 1</td>
-                                    <td>Sample Product Description</td>
-                                    <td>₱100.00</td>
-                                    <td><button class="btn btn-sm btn-outline-primary add-product" data-name="Sample Product 1" data-price="100" data-stock="50">Add</button></td>
-                                </tr>
-                            </tbody>
-                        </table>
                     </div>
                 </div>
             </div>
 
+            <!-- Right Side -->
             <div class="col-md-4">
-                <div class="cart-summary">
-                    <h4><i class="fas fa-shopping-cart me-2"></i>Order Summary</h4>
-                    <hr>
-                    <div class="cart-items-container">
-                        <div id="cartItems">
-                            <!-- Cart items will be added here dynamically -->
-                            <div class="text-muted text-center py-4">
-                                <i class="fas fa-shopping-basket fa-3x mb-2"></i>
-                                <p>Your cart is empty</p>
+                <!-- Order Summary -->
+                <div class="card mb-3" id="orderSummary">
+                    <div class="card-header">
+                        <h4 class="mb-0">Order Summary</h4>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="cart-items" style="max-height: 300px; overflow-y: auto;">
+                            <div id="cartItems" class="p-3">
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-shopping-cart fa-3x mb-2"></i>
+                                    <p>Your cart is empty</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <strong>Total Items:</strong> <span id="totalItems">0</span>
+                                </div>
+                                <div>
+                                    <strong>Total:</strong> <span id="totalAmount">₱0.00</span>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button type="button" id="proceedToPayment" class="btn btn-primary" disabled>
+                                    <i class="fas fa-credit-card me-1"></i> Proceed to Payment
+                                </button>
+                                <button type="button" id="resetCartBtn" class="btn btn-outline-danger">
+                                    <i class="fas fa-trash-alt me-1"></i> Reset Cart
+                                </button>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="mt-auto">
-                        <div class="total-amount text-end">
-                            Total: ₱<span id="totalAmount">0.00</span>
-                        </div>
-                    
-                        <div class="d-grid gap-2 pt-3">
-                            <button class="btn btn-danger" id="resetCart">
-                                <i class="fas fa-trash-alt me-2"></i>Reset
-                            </button>
-                            <button class="btn btn-success btn-checkout" id="checkoutBtn">
-                                <i class="fas fa-credit-card me-2"></i>Checkout
-                            </button>
-                        </div>
-                    </div>
+                </div>
 
-                    <!-- Payment Section -->
-                    <div class="payment-section" id="paymentSection">
-                        <h5><i class="fas fa-money-bill-wave me-2"></i>Payment Details</h5>
-                        <hr>
+                <!-- Payment Section (Hidden by default) -->
+                <div class="card" id="paymentSection" style="display: none;">
+                    <div class="card-header">
+                        <h4 class="mb-0">Payment</h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Order Summary in Payment Section -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light py-2">
+                                <h6 class="mb-0">Order Summary</h6>
+                            </div>
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Total Items:</span>
+                                    <span id="paymentTotalItems" class="fw-medium">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Total Amount:</h5>
+                                    <h4 class="mb-0 text-primary" id="paymentTotalAmount">₱0.00</h4>
+                                </div>
+                            </div>
+                        </div>
                         
                         <div class="mb-3">
                             <label class="form-label">Payment Method</label>
-                            <select class="form-select" id="paymentMethod">
-                                <option value="cash">Cash</option>
-                                <option value="online">Online</option>
-                                <option value="cheque">Cheque</option>
-                                <option value="others">Others</option>
-                            </select>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="paymentMethod" id="cashPayment" value="Cash" checked>
+                                <label class="form-check-label" for="cashPayment">
+                                    <i class="fas fa-money-bill-wave me-1"></i> Cash
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="paymentMethod" id="onlinePayment" value="Online">
+                                <label class="form-check-label" for="onlinePayment">
+                                    <i class="fas fa-globe me-1"></i> Online
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="paymentMethod" id="chequePayment" value="Cheque">
+                                <label class="form-check-label" for="chequePayment">
+                                    <i class="fas fa-money-check me-1"></i> Cheque
+                                </label>
+                            </div>
                         </div>
-                        
                         <div class="mb-3">
-                            <label for="cashAmount" class="form-label">Amount Received</label>
-                            <div class="input-group">
+                            <label for="amountReceived" class="form-label">Amount Received</label>
+                            <div class="input-group mb-3">
                                 <span class="input-group-text">₱</span>
-                                <input type="number" class="form-control" id="cashAmount" placeholder="0.00" step="0.01">
+                                <input type="number" class="form-control" id="amountReceived" placeholder="0.00" step="0.01">
                             </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Total Amount:</span>
-                                <span id="paymentTotal">₱0.00</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
+                            <div class="d-flex justify-content-between mb-3 fs-5">
                                 <span>Change:</span>
-                                <span id="changeAmount">₱0.00</span>
+                                <span id="changeAmount" class="fw-bold">₱0.00</span>
                             </div>
                         </div>
-                        
                         <div class="d-grid gap-2">
-                            <button class="btn btn-secondary" id="backToCart">
-                                <i class="fas fa-arrow-left me-2"></i>Back to Cart
+                            <button class="btn btn-success" id="processPayment">
+                                Process Payment
                             </button>
-                            <button class="btn btn-primary" id="confirmPayment">
-                                <i class="fas fa-check-circle me-2"></i>Confirm Payment
+                            <button class="btn btn-outline-secondary" id="backToCart">
+                                Back to Cart
                             </button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Customer Modal -->
+    <div class="modal fade" id="newCustomerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Customer</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newCustomerForm">
+                        <div class="mb-3">
+                            <label for="newCustomerName" class="form-label">Customer Name</label>
+                            <input type="text" class="form-control" id="newCustomerName" placeholder="Enter full name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newCustomerContact" class="form-label">Contact Number</label>
+                            <input type="text" class="form-control" id="newCustomerContact" placeholder="e.g., 09123456789">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveCustomerBtn">Save Customer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Confirmation Modal -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-receipt me-2"></i>Confirm Payment</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <h6>Order Summary</h6>
+                        <div id="confirmationItems" class="mb-3"></div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal:</span>
+                            <span id="confirmationSubtotal">₱0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Payment Method:</span>
+                            <span id="confirmationPaymentMethod">-</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Amount Received:</span>
+                            <span id="confirmationAmountReceived">₱0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between fw-bold">
+                            <span>Change:</span>
+                            <span id="confirmationChange">₱0.00</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmPaymentBtn">
+                        <i class="fas fa-check-circle me-1"></i> Confirm Payment
+                    </button>
                 </div>
             </div>
         </div>
@@ -205,313 +330,526 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title"><i class="fas fa-check-circle me-2"></i>Success!</h5>
+                    <h5 class="modal-title"><i class="fas fa-check-circle me-2"></i>Payment Successful</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body text-center py-4">
                     <i class="fas fa-check-circle text-success mb-3" style="font-size: 4rem;"></i>
-                    <h4>Transaction Completed</h4>
-                    <p>Your sale has been processed successfully!</p>
-                    <p>Transaction ID: <strong>#TRX-<span id="transactionId">123456</span></strong></p>
+                    <h4>Payment Processed Successfully!</h4>
+                    <p>Your transaction has been completed.</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" id="printReceipt">
-                        <i class="fas fa-print me-2"></i>Print Receipt
-                    </button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Cart state
+        $(document).ready(function() {
+            // Initialize Select2 for customer search
+            $('#customerSelect').select2({
+                placeholder: 'Search customer...',
+                allowClear: true,
+                width: '100%',
+                theme: 'bootstrap-5'
+            });
+
+            // Handle customer selection
+            $('#customerSelect').on('change', function() {
+                const selected = $(this).val();
+                if (selected) {
+                    try {
+                        const customer = JSON.parse(selected);
+                        $('#customerId').val(customer.id);
+                        $('#customerName').val(customer.name);
+                        console.log('Customer selected:', customer); // Debug log
+                    } catch (e) {
+                        console.error('Error parsing customer data:', e);
+                        $('#customerId').val('');
+                        $('#customerName').val('Walk-in Customer');
+                    }
+                } else {
+                    $('#customerId').val('');
+                    $('#customerName').val('Walk-in Customer');
+                }
+            });
+
+            // Save new customer
+            $('#saveCustomerBtn').click(function() {
+                const name = $('#newCustomerName').val().trim();
+                const contact = $('#newCustomerContact').val().trim();
+                
+                if (!name) {
+                    alert('Please enter customer name');
+                    return;
+                }
+
+                $.ajax({
+                    url: '../includes/ledger/save_customer.php',
+                    type: 'POST',
+                    data: {
+                        customer_name: name,
+                        contact: contact
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Add new customer to dropdown
+                            const newOption = new Option(
+                                `${response.customer.customer_name} (${response.customer.contact || 'No contact'})`,
+                                JSON.stringify({
+                                    id: response.customer.id,
+                                    name: response.customer.customer_name
+                                }),
+                                true,
+                                true
+                            );
+                            
+                            $('#customerSelect').append(newOption).trigger('change');
+                            $('#newCustomerModal').modal('hide');
+                            $('#newCustomerForm')[0].reset();
+                        } else {
+                            alert(response.message || 'Error saving customer');
+                        }
+                    },
+                    error: function() {
+                        alert('Error saving customer');
+                    }
+                });
+            });
+            
+            // Reset form when modal is closed
+            $('#newCustomerModal').on('hidden.bs.modal', function () {
+                $('#newCustomerForm')[0].reset();
+            });
             let cart = [];
-            
-            // DOM Elements
-            const cartItems = document.getElementById('cartItems');
-            const totalAmount = document.getElementById('totalAmount');
-            const checkoutBtn = document.getElementById('checkoutBtn');
-            const resetCartBtn = document.getElementById('resetCart');
-            const paymentSection = document.getElementById('paymentSection');
-            const backToCartBtn = document.getElementById('backToCart');
-            const confirmPaymentBtn = document.getElementById('confirmPayment');
-            const cashAmountInput = document.getElementById('cashAmount');
-            const paymentTotal = document.getElementById('paymentTotal');
-            const changeAmount = document.getElementById('changeAmount');
             const successModal = new bootstrap.Modal(document.getElementById('successModal'));
-            const productQuantity = document.getElementById('productQuantity');
-            const productSearch = document.getElementById('productSearch');
-            const productsTable = document.querySelector('#productsTable tbody');
-            
-            // Add product to cart
-            function addToCart(productName, price, quantity) {
-                // Check if product already in cart
-                const existingItem = cart.find(item => item.name === productName);
+
+            // Initialize DataTable
+            const table = $('#productsTable').DataTable({
+                "pageLength": 5,
+                "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
+                "columnDefs": [
+                    { "orderable": false, "targets": [3, 4] }
+                ]
+            });
+
+            // Handle quantity buttons
+            $(document).on('click', '.quantity-btn', function() {
+                const input = $(this).siblings('input[type="number"]');
+                let value = parseInt(input.val());
+                
+                if ($(this).hasClass('increase')) {
+                    input.val(value + 1);
+                } else if ($(this).hasClass('decrease') && value > 1) {
+                    input.val(value - 1);
+                }
+            });
+
+            // Add to cart
+            $(document).on('click', '.add-to-cart', function() {
+                const button = $(this);
+                const name = button.data('name');
+                const price = parseFloat(button.data('price'));
+                const maxStock = parseInt(button.data('stock'));
+                const quantity = parseInt(button.closest('tr').find('.product-quantity').val());
+                
+                // Check if product is out of stock
+                if (maxStock === 0) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Out of Stock',
+                        text: 'This product is currently out of stock.',
+                        confirmButtonColor: '#0d6efd'
+                    });
+                    return;
+                }
+                
+                // Validate quantity
+                if (quantity < 1 || quantity > maxStock) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Invalid Quantity',
+                        text: `Please enter a quantity between 1 and ${maxStock}.`,
+                        confirmButtonColor: '#0d6efd'
+                    });
+                    return;
+                }
+                
+                // Check if item already in cart
+                const existingItem = cart.find(item => item.name === name);
                 
                 if (existingItem) {
-                    existingItem.quantity += parseInt(quantity);
+                    const newQuantity = existingItem.quantity + quantity;
+                    if (newQuantity > maxStock) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Insufficient Stock',
+                            text: `Cannot add more than available stock (${maxStock})`,
+                            confirmButtonColor: '#0d6efd'
+                        });
+                        return;
+                    }
+                    existingItem.quantity = newQuantity;
                     existingItem.total = existingItem.quantity * existingItem.price;
                 } else {
                     cart.push({
-                        name: productName,
-                        price: parseFloat(price),
-                        quantity: parseInt(quantity),
-                        total: parseFloat(price) * parseInt(quantity)
+                        id: button.data('id'),
+                        name: name,
+                        price: price,
+                        quantity: quantity,
+                        total: price * quantity,
+                        stock: maxStock
                     });
                 }
                 
                 updateCart();
-            }
-            
+            });
+
             // Update cart display
             function updateCart() {
-                // Clear cart display
-                cartItems.innerHTML = '';
+                const cartItems = $('#cartItems');
+                const totalItems = cart.reduce((sum, item) => sum + parseInt(item.quantity), 0);
+                const totalAmount = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
+                
+                // Update payment section summary
+                $('#paymentTotalItems').text(totalItems);
+                $('#paymentTotalAmount').text('₱' + totalAmount.toFixed(2));
                 
                 if (cart.length === 0) {
-                    cartItems.innerHTML = `
-                        <div class="text-muted text-center py-4">
-                            <i class="fas fa-shopping-basket fa-3x mb-2"></i>
+                    cartItems.html(`
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-shopping-cart fa-3x mb-2"></i>
                             <p>Your cart is empty</p>
                         </div>
-                    `;
-                    totalAmount.textContent = '0.00';
-                    checkoutBtn.disabled = true;
-                    return;
-                }
-                
-                // Add each item to cart display
-                cart.forEach((item, index) => {
-                    const itemElement = document.createElement('div');
-                    itemElement.className = 'cart-item';
-                    itemElement.innerHTML = `
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="mb-1">${item.name}</h6>
-                                <small class="text-muted">₱${item.price.toFixed(2)} x ${item.quantity}</small>
-                            </div>
-                            <div class="text-end">
-                                <div class="d-flex align-items-center">
-                                    <button class="btn btn-sm btn-outline-secondary me-2 btn-decrease" data-index="${index}">-</button>
-                                    <span class="me-2">${item.quantity}</span>
-                                    <button class="btn btn-sm btn-outline-secondary me-2 btn-increase" data-index="${index}">+</button>
-                                    <button class="btn btn-sm btn-outline-danger btn-remove" data-index="${index}">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                                <div class="fw-bold mt-1">₱${item.total.toFixed(2)}</div>
-                            </div>
-                        </div>
-                    `;
-                    cartItems.appendChild(itemElement);
-                });
-                
-                // Calculate total
-                const total = cart.reduce((sum, item) => sum + item.total, 0);
-                totalAmount.textContent = total.toFixed(2);
-                paymentTotal.textContent = `₱${total.toFixed(2)}`;
-                checkoutBtn.disabled = false;
-                
-                // Add event listeners to quantity buttons
-                document.querySelectorAll('.btn-increase').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        const index = e.target.getAttribute('data-index');
-                        cart[index].quantity++;
-                        cart[index].total = cart[index].quantity * cart[index].price;
-                        updateCart();
-                    });
-                });
-                
-                document.querySelectorAll('.btn-decrease').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        const index = e.target.getAttribute('data-index');
-                        if (cart[index].quantity > 1) {
-                            cart[index].quantity--;
-                            cart[index].total = cart[index].quantity * cart[index].price;
-                            updateCart();
-                        }
-                    });
-                });
-                
-                document.querySelectorAll('.btn-remove').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        const index = e.target.closest('.btn-remove').getAttribute('data-index');
-                        cart.splice(index, 1);
-                        updateCart();
-                    });
-                });
-            }
-            
-            // Reset cart
-            function resetCart() {
-                cart = [];
-                updateCart();
-                document.getElementById('customerName').value = '';
-                paymentSection.style.display = 'none';
-                document.querySelector('.cart-summary h4').textContent = 'Order Summary';
-            }
-            
-            // Calculate change
-            function calculateChange() {
-                const total = parseFloat(totalAmount.textContent);
-                const cashAmount = parseFloat(cashAmountInput.value) || 0;
-                const change = cashAmount - total;
-                
-                changeAmount.textContent = `₱${change >= 0 ? change.toFixed(2) : '0.00'}`;
-                
-                if (change < 0) {
-                    changeAmount.classList.add('text-danger');
-                    changeAmount.classList.remove('text-success');
-                    confirmPaymentBtn.disabled = true;
+                    `);
+                    $('#proceedToPayment').prop('disabled', true);
                 } else {
-                    changeAmount.classList.remove('text-danger');
-                    changeAmount.classList.add('text-success');
-                    confirmPaymentBtn.disabled = false;
-                }
-            }
-            
-            // Event Listeners
-            document.getElementById('addToCart').addEventListener('click', () => {
-                // In a real app, you would search for the product
-                const productName = 'Sample Product';
-                const price = 100.00;
-                const quantity = parseInt(productQuantity.value) || 1;
-                
-                if (productName && price && quantity > 0) {
-                    addToCart(productName, price, quantity);
-                    productQuantity.value = 1;
-                }
-            });
-            
-            // Add sample product rows
-            const sampleProducts = [
-                { name: 'Product 1', price: 100.00, stock: 50 },
-                { name: 'Product 2', price: 150.00, stock: 30 },
-                { name: 'Product 3', price: 200.00, stock: 20 },
-                { name: 'Product 4', price: 75.50, stock: 45 },
-                { name: 'Product 5', price: 120.00, stock: 15 }
-            ];
-            
-            sampleProducts.forEach(product => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${product.name}</td>
-                    <td>₱${product.price.toFixed(2)}</td>
-                    <td>${product.stock}</td>
-                    <td><button class="btn btn-sm btn-outline-primary add-product" 
-                             data-name="${product.name}" 
-                             data-price="${product.price}" 
-                             data-stock="${product.stock}">Add</button></td>
-                `;
-                productsTable.appendChild(row);
-            });
-            
-            // Add product from table
-            document.addEventListener('click', (e) => {
-                if (e.target.classList.contains('add-product')) {
-                    const button = e.target;
-                    const productName = button.getAttribute('data-name');
-                    const price = parseFloat(button.getAttribute('data-price'));
-                    const stock = parseInt(button.getAttribute('data-stock'));
-                    const quantity = parseInt(productQuantity.value) || 1;
+                    let html = '';
                     
-                    if (quantity > 0 && quantity <= stock) {
-                        addToCart(productName, price, quantity);
-                        productQuantity.value = 1;
-                    } else {
-                        alert(`Invalid quantity. Available stock: ${stock}`);
-                    }
+                    cart.forEach((item, index) => {
+                        html += `
+                            <div class="cart-item border-bottom py-2" data-index="${index}">
+                                <div class="d-flex justify-content-between">
+                                    <div class="me-3">
+                                        <h6 class="mb-1">${item.name}</h6>
+                                        <small class="text-muted">₱${item.price.toFixed(2)} × ${item.quantity}</small>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-3 fw-bold">₱${item.total.toFixed(2)}</span>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-secondary cart-decrease">-</button>
+                                            <button class="btn btn-outline-secondary cart-increase">+</button>
+                                            <button class="btn btn-outline-danger cart-remove">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    cartItems.html(html);
+                    $('#proceedToPayment').prop('disabled', false);
                 }
-            });
-            
-            // Search products
-            productSearch.addEventListener('input', (e) => {
-                const searchTerm = e.target.value.toLowerCase();
-                const rows = productsTable.getElementsByTagName('tr');
                 
-                for (let row of rows) {
-                    const name = row.cells[0]?.textContent.toLowerCase() || '';
-                    if (name.includes(searchTerm)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
+                updateTotals();
+            }
+
+            // Update totals
+            function updateTotals() {
+                const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+                const totalAmount = cart.reduce((sum, item) => sum + item.total, 0);
+                
+                $('#totalItems').text(totalItems);
+                $('#totalAmount').text(`₱${totalAmount.toFixed(2)}`);
+            }
+
+            // Cart item actions
+            $(document).on('click', '.cart-decrease', function() {
+                const index = $(this).closest('.cart-item').data('index');
+                if (cart[index].quantity > 1) {
+                    cart[index].quantity--;
+                    cart[index].total = cart[index].quantity * cart[index].price;
+                    updateCart();
                 }
             });
-            
-            // Checkout button
-            checkoutBtn.addEventListener('click', () => {
+
+            $(document).on('click', '.cart-increase', function() {
+                const index = $(this).closest('.cart-item').data('index');
+                cart[index].quantity++;
+                cart[index].total = cart[index].quantity * cart[index].price;
+                updateCart();
+            });
+
+            $(document).on('click', '.cart-remove', function() {
+                const index = $(this).closest('.cart-item').data('index');
+                cart.splice(index, 1);
+                updateCart();
+            });
+
+            // Proceed to payment
+            $('#proceedToPayment').click(function() {
+                $('#orderSummary').hide();
+                $('#paymentSection').show();
+                // Update the total in payment section
+                $('#totalInPayment').text($('#totalAmount').text());
+                $('#amountReceived').val('').focus();
+                calculateChange();
+            });
+
+            // Back to cart
+            $('#backToCart').click(function() {
+                $('#paymentSection').hide();
+                $('#orderSummary').show();
+            });
+
+            // Calculate change when amount received changes
+            function calculateChange() {
+                const amountReceived = parseFloat($('#amountReceived').val()) || 0;
+                const totalAmount = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
+                const change = amountReceived - totalAmount;
+                const changeAmount = Math.max(0, change);
+                
+                $('#changeAmount').text('₱' + changeAmount.toFixed(2));
+                
+                // Store the change amount in a data attribute
+                $('#amountReceived').data('change-amount', changeAmount);
+                
+                // Enable/disable process payment button
+                $('#processPayment').prop('disabled', change < 0);
+                
+                return changeAmount;
+            }
+
+            // Amount received input
+            $('#amountReceived').on('input', calculateChange);
+
+            // Reset cart function
+            function resetCart() {
                 if (cart.length === 0) return;
                 
-                document.querySelector('.cart-summary h4').innerHTML = '<i class="fas fa-credit-card me-2"></i>Payment';
-                paymentSection.style.display = 'block';
-                cashAmountInput.focus();
+                Swal.fire({
+                    title: 'Clear Cart',
+                    text: 'Are you sure you want to clear all items from your cart?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#0d6efd',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, clear cart',
+                    cancelButtonText: 'Cancel',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        cart = [];
+                        updateCart();
+                        // Reset payment section if visible
+                        if ($('#paymentSection').is(':visible')) {
+                            $('#paymentSection').hide();
+                            $('#orderSummary').show();
+                        }
+                        // Show success message
+                        Swal.fire({
+                            title: 'Cart Cleared',
+                            text: 'Your cart has been cleared.',
+                            icon: 'success',
+                            confirmButtonColor: '#0d6efd',
+                            timer: 1500,
+                            timerProgressBar: true
+                        });
+                    }
+                });
+            }
+
+            // Reset cart button click handler
+            $(document).on('click', '#resetCartBtn', resetCart);
+
+            // Process payment function
+            function processPayment(paymentRequest) {
+                const { paymentData, $btn } = paymentRequest;
                 
-                // Scroll to payment section
-                paymentSection.scrollIntoView({ behavior: 'smooth' });
-            });
+                // Disable button to prevent double submission
+                $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...');
+
+                // Send data to server
+                $.ajax({
+                    url: 'process_sale.php',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(paymentData),
+                    success: function(response) {
+                        if (response.success) {
+                            // Show success message with transaction details
+                            const transaction = response.transaction;
+                            let itemsList = '';
+                            
+                            if (transaction.items_list) {
+                                itemsList = `<div class="mt-3"><strong>Items:</strong> ${transaction.items_list}</div>`;
+                            }
+                            
+                            $('#successMessage').html(`
+                                <h5>Transaction Completed Successfully!</h5>
+                                <div class="mt-3">
+                                    <p><strong>Transaction ID:</strong> ${transaction.id}</p>
+                                    <p><strong>Customer:</strong> ${transaction.customer_name}</p>
+                                    <p><strong>Total Amount:</strong> ₱${parseFloat(transaction.total_amount).toFixed(2)}</p>
+                                    <p><strong>Payment Method:</strong> ${transaction.payment_method}</p>
+                                    <p><strong>Amount Received:</strong> ₱${parseFloat(transaction.amount_received).toFixed(2)}</p>
+                                    <p><strong>Change:</strong> ₱${parseFloat(transaction.change_amount).toFixed(2)}</p>
+                                    ${itemsList}
+                                </div>
+                                <div class="mt-3 text-center">
+                                    <button type="button" class="btn btn-primary me-2" onclick="window.print()">
+                                        <i class="fas fa-print me-1"></i> Print Receipt
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            `);
+                            
+                            successModal.show();
+                            
+                            // Reset form and return to cart view
+                            cart = [];
+                            updateCart();
+                            $('input[name="paymentMethod"]').prop('checked', false);
+                            $('#amountReceived').val('');
+                            $('#changeAmount').text('₱0.00');
+                            $('#customerSelect').val('').trigger('change');
+                            
+                            // Return to cart view
+                            $('#paymentSection').hide();
+                            $('#orderSummary').show();
+                            
+                            // Reset payment method to default (Cash)
+                            $('#cashPayment').prop('checked', true);
+                            
+                            // Enable the proceed to payment button
+                            $('#proceedToPayment').prop('disabled', true);
+                            
+                            // Refresh the page after 3 seconds to reset the form
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 3000);
+                        } else {
+                            alert('Error: ' + (response.message || 'Unknown error occurred'));
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        let errorMsg = 'Error processing payment';
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            errorMsg = response.message || errorMsg;
+                            console.error('Server error:', response);
+                        } catch (e) {
+                            console.error('Error parsing error response:', e);
+                        }
+                        alert(errorMsg);
+                    },
+                    complete: function() {
+                        $btn.prop('disabled', false).html('Process Payment');
+                    }
+                });
+            };
             
-            // Back to cart button
-            backToCartBtn.addEventListener('click', () => {
-                paymentSection.style.display = 'none';
-                document.querySelector('.cart-summary h4').textContent = 'Order Summary';
-            });
-            
-            // Reset cart button
-            resetCartBtn.addEventListener('click', resetCart);
-            
-            // Calculate change when cash amount changes
-            cashAmountInput.addEventListener('input', calculateChange);
-            
-            // Confirm payment button
-            confirmPaymentBtn.addEventListener('click', () => {
-                const customerName = document.getElementById('customerName').value || 'Walk-in Customer';
-                const paymentMethod = document.getElementById('paymentMethod').options[document.getElementById('paymentMethod').selectedIndex].text;
-                const cashAmount = parseFloat(cashAmountInput.value) || 0;
-                const total = parseFloat(totalAmount.textContent);
-                const change = cashAmount - total;
+            // Process payment button click handler
+            $('#processPayment').click(function() {
+                // Get customer data
+                const customerId = $('#customerId').val();
+                let customerName = $('#customerName').val();
                 
-                if (change < 0) {
-                    alert('Insufficient payment amount');
-                    return;
+                // If no customer is selected, use 'Walk-in Customer' as default
+                if (!customerId && !customerName) {
+                    customerName = 'Walk-in Customer';
                 }
                 
-                // Generate random transaction ID
-                const transactionId = 'TRX-' + Math.floor(100000 + Math.random() * 900000);
-                document.getElementById('transactionId').textContent = transactionId;
+                // Cache DOM elements
+                const $amountReceived = $('#amountReceived');
+                const $paymentMethod = $('input[name="paymentMethod"]:checked');
                 
-                // Show success modal
-                successModal.show();
+                // Calculate totals
+                const totalAmount = parseFloat(cart.reduce((sum, item) => sum + parseFloat(item.total), 0).toFixed(2));
+                const amountReceived = parseFloat($amountReceived.val()) || 0;
+                const changeAmount = calculateChange(); // This ensures we have the latest calculated change
+                const paymentMethod = $paymentMethod.val();
                 
-                // In a real app, you would send the transaction data to the server here
-                console.log('Transaction completed:', {
-                    customerName,
-                    items: cart,
-                    paymentMethod,
-                    total,
-                    cashAmount,
-                    change,
-                    transactionId,
-                    date: new Date().toISOString()
+                // Validate before proceeding
+                if (!cart.length) {
+                    return alert('Please add items to the cart');
+                }
+
+                if (!paymentMethod) {
+                    return alert('Please select a payment method');
+                }
+
+                if (amountReceived < totalAmount) {
+                    return alert('Amount received is less than the total amount');
+                }
+
+                // Prepare data for the server
+                const paymentData = {
+                    customer_id: customerId || null,
+                    customer_name: customerName,
+                    items: cart.map(({ id, name, price, quantity, total }) => ({
+                        id,
+                        name,
+                        price: parseFloat(price),
+                        quantity: parseInt(quantity, 10),
+                        total: parseFloat(total)
+                    })),
+                    payment_method: paymentMethod,
+                    amount_received: amountReceived,
+                    change_amount: changeAmount,
+                    total_amount: totalAmount
+                };
+                
+                // Show confirmation modal
+                const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+                
+                // Update confirmation modal content
+                $('#confirmationItems').html(cart.map(item => `
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>${item.quantity}x ${item.name}</span>
+                        <span>₱${parseFloat(item.total).toFixed(2)}</span>
+                    </div>
+                `).join(''));
+                
+                $('#confirmationSubtotal').text(`₱${totalAmount.toFixed(2)}`);
+                $('#confirmationPaymentMethod').text(paymentMethod);
+                $('#confirmationAmountReceived').text(`₱${amountReceived.toFixed(2)}`);
+                $('#confirmationChange').text(`₱${changeAmount.toFixed(2)}`);
+                
+                // Reset confirm button state
+                const $confirmBtn = $('#confirmPaymentBtn');
+                $confirmBtn.prop('disabled', false).html('<i class="fas fa-check-circle me-1"></i> Confirm Payment');
+                
+                // Show the modal
+                confirmationModal.show();
+                
+                // Handle confirm button click
+                $confirmBtn.off('click').on('click', function() {
+                    // Disable confirm button and show processing state
+                    $confirmBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...');
+                    
+                    // Hide the modal
+                    confirmationModal.hide();
+                    
+                    // Process the payment
+                    processPayment({
+                        paymentData: paymentData,
+                        $btn: $('#processPayment')
+                    });
                 });
-                
-                // Reset the form after a delay
-                setTimeout(() => {
-                    successModal.hide();
-                    resetCart();
-                }, 5000);
             });
-            
-            // Print receipt button
-            document.getElementById('printReceipt').addEventListener('click', () => {
-                // In a real app, this would open a print dialog with a formatted receipt
-                alert('Printing receipt...');
-                // window.print(); // Uncomment this in production to actually print
-            });
-            
+
             // Initialize cart
             updateCart();
         });
