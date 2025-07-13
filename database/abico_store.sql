@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 11, 2025 at 02:39 PM
+-- Generation Time: Jul 12, 2025 at 10:15 AM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -98,36 +98,34 @@ INSERT INTO `customers` (`id`, `customer_name`, `contact`, `debt`, `created_at`,
 -- --------------------------------------------------------
 
 --
--- Table structure for table `inventory_activity_logs`
+-- Table structure for table `inventory_activity_log`
 --
 
-CREATE TABLE `inventory_activity_logs` (
+CREATE TABLE `inventory_activity_log` (
   `id` int(11) NOT NULL,
-  `product_id` int(11) DEFAULT NULL,
-  `action` varchar(50) NOT NULL COMMENT 'e.g., create_product, update_product, delete_product, update_stock',
-  `details` text DEFAULT NULL,
-  `old_quantity` int(11) DEFAULT NULL,
-  `new_quantity` int(11) DEFAULT NULL,
-  `old_price` decimal(10,2) DEFAULT NULL,
-  `new_price` decimal(10,2) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `user_id` int(11) NOT NULL COMMENT 'ID of the user who performed the action',
+  `action` varchar(50) NOT NULL COMMENT 'Type of action (add, update, delete, etc.)',
+  `description` text NOT NULL COMMENT 'Detailed description of the action',
+  `product_id` int(11) DEFAULT NULL COMMENT 'ID of the affected product',
+  `product_name` varchar(255) DEFAULT NULL COMMENT 'Name of the affected product',
+  `old_values` text DEFAULT NULL COMMENT 'JSON string of old values (for updates)',
+  `new_values` text DEFAULT NULL COMMENT 'JSON string of new values',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `inventory_activity_logs`
+-- Dumping data for table `inventory_activity_log`
 --
 
-INSERT INTO `inventory_activity_logs` (`id`, `product_id`, `action`, `details`, `old_quantity`, `new_quantity`, `old_price`, `new_price`, `created_at`) VALUES
-(25, 35, 'create_product', 'Added new product: Patata', NULL, 32, NULL, 502.00, '2025-07-10 09:30:37'),
-(26, 36, 'create_product', 'Added new product: Patata', NULL, 32, NULL, 502.05, '2025-07-10 09:32:12'),
-(27, 37, 'create_product', 'Added new product: Patat0', NULL, 32, NULL, 502.05, '2025-07-10 09:32:41'),
-(28, 38, 'create_product', 'Added new product: Patat01', NULL, 32, NULL, 502.05, '2025-07-10 09:33:33'),
-(29, 36, 'delete_product', 'Deleted product: Patata', 32, NULL, 502.05, NULL, '2025-07-10 15:36:47'),
-(30, 38, 'delete_product', 'Deleted product: Patat01', 32, NULL, 502.05, NULL, '2025-07-10 15:36:53'),
-(31, 24, 'delete_product', 'Deleted product: Toothpaste car', 12, NULL, 10.01, NULL, '2025-07-10 15:37:55'),
-(32, 23, 'delete_product', 'Deleted product: Toothpaste', 10, NULL, 10.00, NULL, '2025-07-10 15:37:59'),
-(33, 39, 'create_product', 'Added new product: CheezIt', NULL, 100, NULL, 17.90, '2025-07-10 20:22:54'),
-(34, 40, 'create_product', 'Added new product: CheezItasdas', NULL, 100, NULL, 17.90, '2025-07-11 02:34:52');
+INSERT INTO `inventory_activity_log` (`id`, `user_id`, `action`, `description`, `product_id`, `product_name`, `old_values`, `new_values`, `created_at`) VALUES
+(25, 3, 'add', 'Added new product', 36, 'Fresh Whole Milk', NULL, '{\n    \"product_name\": \"Fresh Whole Milk\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"85\",\n    \"stock_quantity\": 120,\n    \"unit_type\": \"L\",\n    \"unit_value\": \"1\",\n    \"other_unit_type\": null,\n    \"pieces_per_pack\": null\n}', '2025-07-12 13:08:39'),
+(26, 3, 'add', 'Added new product', 37, 'FreshScent Bath Soap', NULL, '{\n    \"product_name\": \"FreshScent Bath Soap\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"99\",\n    \"stock_quantity\": 77,\n    \"unit_type\": \"pack\",\n    \"unit_value\": \"1\",\n    \"other_unit_type\": null,\n    \"pieces_per_pack\": 5\n}', '2025-07-12 13:10:34'),
+(27, 3, 'add', 'Added new product', 38, 'UltraBright LED Flashlight', NULL, '{\n    \"product_name\": \"UltraBright LED Flashlight\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"49\",\n    \"stock_quantity\": 50,\n    \"unit_type\": \"box\",\n    \"unit_value\": \"1\",\n    \"other_unit_type\": \"box\",\n    \"pieces_per_pack\": null\n}', '2025-07-12 13:11:10'),
+(28, 3, 'add', 'Added new product', 39, 'UltraBright LED Flashlight', NULL, '{\n    \"product_name\": \"UltraBright LED Flashlight\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"49\",\n    \"stock_quantity\": 50,\n    \"unit_type\": \"g\",\n    \"unit_value\": \"20\",\n    \"other_unit_type\": null,\n    \"pieces_per_pack\": null\n}', '2025-07-12 15:57:10'),
+(29, 3, 'add', 'Added new product', 40, 'UltraBright LED Flashlight', NULL, '{\n    \"product_name\": \"UltraBright LED Flashlight\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"49\",\n    \"stock_quantity\": 50,\n    \"unit_type\": \"g\",\n    \"unit_value\": \"50\",\n    \"other_unit_type\": null,\n    \"pieces_per_pack\": null\n}', '2025-07-12 15:57:29'),
+(30, 3, 'add', 'Added new product', 41, 'UltraBright LED Flashlight', NULL, '{\n    \"product_name\": \"UltraBright LED Flashlight\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"49\",\n    \"stock_quantity\": 50,\n    \"unit_type\": \"g\",\n    \"unit_value\": \"50\",\n    \"other_unit_type\": null,\n    \"pieces_per_pack\": null\n}', '2025-07-12 15:57:45'),
+(31, 3, 'add', 'Added new product', 42, 'Coke', NULL, '{\n    \"product_name\": \"Coke\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"20\",\n    \"stock_quantity\": 10,\n    \"unit_type\": \"pack\",\n    \"unit_value\": \"1\",\n    \"other_unit_type\": null,\n    \"pieces_per_pack\": 12\n}', '2025-07-12 15:58:25'),
+(32, 3, 'update', 'Updated product details', 42, 'Coke', '{\n    \"pieces_per_pack\": 12\n}', '{\n    \"pieces_per_pack\": 16\n}', '2025-07-12 15:59:54');
 
 -- --------------------------------------------------------
 
@@ -153,36 +151,28 @@ CREATE TABLE `payments` (
 CREATE TABLE `products` (
   `id` int(11) NOT NULL,
   `product_name` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
-  `quantity` int(11) NOT NULL DEFAULT 0,
-  `price` decimal(10,2) NOT NULL,
+  `unit_value` int(11) NOT NULL DEFAULT 1,
+  `unit_type` varchar(20) NOT NULL DEFAULT 'piece',
+  `other_unit_type` varchar(50) DEFAULT NULL,
+  `pieces_per_pack` int(11) DEFAULT NULL,
+  `stock_quantity` int(11) NOT NULL,
+  `price_per_unit` decimal(10,2) NOT NULL DEFAULT 0.00,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Stores product inventory information';
 
 --
 -- Dumping data for table `products`
 --
 
-INSERT INTO `products` (`id`, `product_name`, `description`, `quantity`, `price`, `created_at`, `updated_at`) VALUES
-(7, 'Patata', 'fresh from farm', 2000, 20.02, '2025-07-08 10:13:23', '2025-07-09 00:00:17'),
-(11, 'Mang Juan ', '5 GRAM', 100, 15.00, '2025-07-09 04:56:53', '2025-07-10 07:10:32'),
-(13, 'Mang Juan ', 'okay', 100, 15.00, '2025-07-10 04:41:39', '2025-07-10 10:41:39'),
-(14, 'Mang Juan ', 'asda', 100, 20.00, '2025-07-10 04:46:01', '2025-07-10 08:31:47'),
-(15, 'Patata', 'asda', 12, 12.00, '2025-07-10 04:46:09', '2025-07-10 08:31:36'),
-(16, 'Chechs', 'asdf', 3, 0.02, '2025-07-10 04:46:21', '2025-07-10 08:58:18'),
-(19, 'Mang Juan', 'asd', 3, 12.00, '2025-07-10 04:46:52', '2025-07-10 10:46:52'),
-(20, 'Patata', 'asdfasdfsdafadsf/aksdmvlkjasdnfkjadsnkajdsfnkadsjfnadskjfnasdkjfnadskjnadskjnfjdjsajnfkjadsnfkjdsnfjksdnfjsdnfjkasdnfkjadsnfjkasdnfjkasdnfjasdnfjadsnfjkasdnfjasdnfjksadnfjkadsnfjsdnfjkadsnfjkdsnfjknasdjfknsdkjfnsdkjfnadsljkfnasdljkfnasdlkjfnasdlkjfnadslkjfnadslkjfnaldskjf', 12, 12.00, '2025-07-10 04:47:00', '2025-07-10 08:38:04'),
-(25, 'BearBrand', 'asd', 20, 20.00, '2025-07-10 09:04:38', '2025-07-10 15:04:38'),
-(26, 'BearBrand', 'lkjbkh', 20, 20.00, '2025-07-10 09:05:56', '2025-07-10 15:05:56'),
-(27, 'BearBrand', 'asdas', 20, 20.00, '2025-07-10 09:06:54', '2025-07-10 15:06:54'),
-(28, 'Milo', 'champion every day', 10, 10.00, '2025-07-10 09:08:54', '2025-07-10 15:08:54'),
-(29, 'Milo', 'champion every days', 10, 10.00, '2025-07-10 09:09:47', '2025-07-10 09:12:46'),
-(33, 'Patata', 'mn mn', 32, 502.00, '2025-07-10 09:26:26', '2025-07-10 15:26:26'),
-(34, 'Patata', 'asfas', 32, 502.00, '2025-07-10 09:28:27', '2025-07-10 15:28:27'),
-(35, 'Patata', 'sad', 32, 502.00, '2025-07-10 09:30:37', '2025-07-10 15:30:37'),
-(37, 'Patat0', 'asxas', 32, 502.05, '2025-07-10 09:32:41', '2025-07-10 15:32:41'),
-(39, 'CheezIt', 'Cheese, 60 grams', 100, 17.90, '2025-07-10 20:22:54', '2025-07-11 02:34:34');
+INSERT INTO `products` (`id`, `product_name`, `unit_value`, `unit_type`, `other_unit_type`, `pieces_per_pack`, `stock_quantity`, `price_per_unit`, `created_at`, `updated_at`) VALUES
+(36, 'Fresh Whole Milk', 1, 'L', NULL, NULL, 120, 85.00, '2025-07-11 23:08:39', '2025-07-12 05:08:39'),
+(37, 'FreshScent Bath Soap', 1, 'pack', NULL, 5, 77, 99.00, '2025-07-11 23:10:34', '2025-07-12 05:10:34'),
+(38, 'UltraBright LED Flashlight', 1, 'box', 'box', NULL, 50, 49.00, '2025-07-11 23:11:10', '2025-07-12 05:11:10'),
+(39, 'UltraBright LED Flashlight', 20, 'g', NULL, NULL, 50, 49.00, '2025-07-12 01:57:10', '2025-07-12 07:57:10'),
+(40, 'UltraBright LED Flashlight', 50, 'g', NULL, NULL, 50, 49.00, '2025-07-12 01:57:28', '2025-07-12 07:57:28'),
+(41, 'UltraBright LED Flashlight', 50, 'g', NULL, NULL, 50, 49.00, '2025-07-12 01:57:45', '2025-07-12 07:57:45'),
+(42, 'Coke', 1, 'pack', NULL, 16, 10, 20.00, '2025-07-12 01:58:25', '2025-07-12 01:59:54');
 
 -- --------------------------------------------------------
 
@@ -209,7 +199,7 @@ CREATE TABLE `sales` (
 CREATE TABLE `sale_items` (
   `id` int(11) NOT NULL,
   `sale_id` int(11) NOT NULL,
-  `product_id` int(11) NOT NULL,
+  `product_id` int(11) DEFAULT NULL,
   `quantity` int(11) NOT NULL,
   `price` decimal(10,2) NOT NULL,
   `subtotal` decimal(10,2) NOT NULL
@@ -256,12 +246,14 @@ ALTER TABLE `customers`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `inventory_activity_logs`
+-- Indexes for table `inventory_activity_log`
 --
-ALTER TABLE `inventory_activity_logs`
+ALTER TABLE `inventory_activity_log`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_product` (`product_id`),
-  ADD KEY `idx_created` (`created_at`);
+  ADD KEY `idx_user_id` (`user_id`),
+  ADD KEY `idx_created_at` (`created_at`),
+  ADD KEY `idx_action` (`action`),
+  ADD KEY `idx_product_id` (`product_id`);
 
 --
 -- Indexes for table `payments`
@@ -274,7 +266,9 @@ ALTER TABLE `payments`
 -- Indexes for table `products`
 --
 ALTER TABLE `products`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_product_name` (`product_name`),
+  ADD KEY `idx_product_type` (`unit_type`);
 
 --
 -- Indexes for table `sales`
@@ -315,10 +309,10 @@ ALTER TABLE `customers`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
--- AUTO_INCREMENT for table `inventory_activity_logs`
+-- AUTO_INCREMENT for table `inventory_activity_log`
 --
-ALTER TABLE `inventory_activity_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+ALTER TABLE `inventory_activity_log`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `payments`
@@ -330,7 +324,7 @@ ALTER TABLE `payments`
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
 
 --
 -- AUTO_INCREMENT for table `sales`
@@ -370,8 +364,8 @@ ALTER TABLE `sales`
 -- Constraints for table `sale_items`
 --
 ALTER TABLE `sale_items`
-  ADD CONSTRAINT `sale_items_ibfk_1` FOREIGN KEY (`sale_id`) REFERENCES `sales` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `sale_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_sale_items_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `sale_items_ibfk_1` FOREIGN KEY (`sale_id`) REFERENCES `sales` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

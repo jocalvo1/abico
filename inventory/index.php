@@ -22,8 +22,8 @@ $db = $database->getConnection();
 // Initialize Product object
 $product = new product($db);
 
-// Get all products
-$stmt = $product->readAll();
+// Get all products, ordered by created_at descending
+$stmt = $db->query("SELECT * FROM products ORDER BY created_at DESC");
 
 // Include template header, sidebar, and navigation
 include __DIR__ . "/../templates/header.php";
@@ -39,7 +39,7 @@ include __DIR__ . "/../templates/nav.php";
                     <h4 class="card-title mb-0">
                         <div class="btn-group" role="group">
                             <a href="index.php" class="btn btn-outline-primary active">
-                                <i class="fas fa-users"></i> Inventory
+                                <i class="fas fa-boxes"></i> Inventory
                             </a>
                             <a href="activity_log.php" class="btn btn-outline-secondary">
                                 <i class="fas fa-history"></i> Activity Logs
@@ -58,30 +58,56 @@ include __DIR__ . "/../templates/nav.php";
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Name</th>  
-                                <th>Description</th>
+                                <th>Product Name</th>
+                                <th>Units</th>
+                                <th>Stock Quantity</th>
                                 <th>Price</th>
-                                <th>Quantity</th>
                                 <th>Actions</th>
+                                <th class="d-none">Created At</th> <!-- Hidden column for sorting -->
                             </tr>
                         </thead>
                         <tbody>
                             <?php $count = 1; ?>
                             <?php while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) { ?>
                             <tr>
-                                <td><?php echo $count++; ?></td>
-                                <td><?php echo htmlspecialchars(mb_strimwidth($row['product_name'], 0, 20, "...")); ?></td>
-                                <td><?php echo htmlspecialchars(mb_strimwidth($row['description'], 0, 20, "...")); ?></td>
-                                <td data-order="<?php echo $row['price']; ?>">₱<?php echo number_format($row['price'], 2); ?></td>
-                                <td><?php echo $row['quantity']; ?></td>
+                                <td></td> <!-- Will be populated by DataTables -->
+                                <td><?php echo htmlspecialchars($row['product_name']); ?></td>
+                                <td>
+                                    <?php 
+                                    $unitValue = $row['unit_value'] ?? 1;
+                                    $unitType = $row['unit_type'] ?? '';
+                                    
+                                    $unitMap = [
+                                        'g' => 'Grams',
+                                        'kg' => 'Kilograms',
+                                        'L' => 'Liters',
+                                        'ml' => 'Milliliters',
+                                        'pc' => 'Pieces',
+                                        'doz' => 'Dozen',
+                                        'set' => 'Set',
+                                        'tray' => 'Tray',
+                                        'pack' => 'Pack' . (!empty($row['pieces_per_pack']) ? ' (' . $row['pieces_per_pack'] . ' pcs)' : ''),
+                                        'other' => !empty($row['other_unit_type']) ? htmlspecialchars($row['other_unit_type']) : 'Other'
+                                    ];
+                                    
+                                    $displayUnit = $unitMap[$unitType] ?? ucfirst($unitType);
+                                    echo $unitValue . ' ' . $displayUnit . ($unitValue != 1 && !in_array($unitType, ['g', 'kg', 'L', 'ml', 'pc', 'doz', 'set', 'tray', 'pack', 'other']) ? 's' : '');
+                                    ?>
+                                </td>
+                                <td><?php echo $row['stock_quantity'] ?? $row['quantity']; ?></td>
+                                <td data-order="<?php echo $row['price_per_unit'] ?? $row['price']; ?>">₱<?php echo number_format(($row['price_per_unit'] ?? $row['price']), 2); ?></td>
+                                <td class="d-none"><?php echo $row['created_at']; ?></td>
                                 <td>
                                     <div class="d-flex">
                                     <button class="btn btn-primary btn-sm me-2 edit-product"
                                             data-id="<?php echo $row['id']; ?>"
                                             data-name="<?php echo htmlspecialchars($row['product_name']); ?>"
-                                            data-description="<?php echo htmlspecialchars($row['description']); ?>"
-                                            data-quantity="<?php echo $row['quantity']; ?>"
-                                            data-price="<?php echo $row['price']; ?>">
+                                            data-quantity="<?php echo $row['stock_quantity'] ?? $row['quantity']; ?>"
+                                            data-unit-type="<?php echo htmlspecialchars($row['unit_type'] ?? ''); ?>"
+                                            data-unit-value="<?php echo $row['unit_value'] ?? '1'; ?>"
+                                            data-other-unit-type="<?php echo htmlspecialchars($row['other_unit_type'] ?? ''); ?>"
+                                            data-pieces-per-pack="<?php echo $row['pieces_per_pack'] ?? ''; ?>"
+                                            data-price="<?php echo $row['price_per_unit'] ?? $row['price']; ?>">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                         <button class="btn btn-danger btn-sm delete-product" 
@@ -116,64 +142,47 @@ include __DIR__ . "/../templates/nav.php";
                         <input type="text" class="form-control form-control-sm" name="product_name" placeholder="e.g., Premium White Sugar" required>
                     </div>
                     <div class="border rounded p-3 mb-3">
-                        <h6 class="mb-3 pb-1 border-bottom fw-semibold text-uppercase small text-muted">Product Details</h6>
+                        <h6 class="mb-3 pb-1 border-bottom fw-semibold text-uppercase small text-muted">Unit Details</h6>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label">Product Type</label>
-                                    <select class="form-select" name="product_type" id="productType" required>
-                                    <option value="">-- Select Product Type --</option>
+                                <label class="form-label">Unit Type</label>
+                                <select class="form-select" name="unit_type" id="unitType" required>
+                                    <option value="">-- Select Unit Type --</option>
                                     <optgroup label="Weight">
-                                        <option value="gram">Gram (g)</option>
-                                        <option value="kilo">Kilogram (kg)</option>
+                                        <option value="g">Gram (g)</option>
+                                        <option value="kg">Kilogram (kg)</option>
                                     </optgroup>
                                     <optgroup label="Volume">
-                                        <option value="liter">Liter (L)</option>
+                                        <option value="L">Liter (L)</option>
                                         <option value="ml">Milliliter (ml)</option>
                                     </optgroup>
                                     <optgroup label="Count">
-                                        <option value="piece">Piece (pc)</option>
-                                        <option value="dozen">Dozen</option>
+                                        <option value="pc" selected>Piece (pc)</option>
+                                        <option value="doz">Dozen</option>
                                         <option value="set">Set</option>
                                         <option value="tray">Tray</option>
-                                    </optgroup>
-                                    <optgroup label="Containers">
-                                        <option value="bottle">Bottle</option>
-                                        <option value="can">Can</option>
-                                        <option value="box">Box</option>
                                         <option value="pack">Pack</option>
-                                        <option value="sachet">Sachet</option>
-                                        <option value="pouch">Pouch</option>
-                                        <option value="bar">Bar</option>
-                                        <option value="cup">Cup</option>
-                                        <option value="roll">Roll</option>
-                                        <option value="stick">Stick</option>
-                                        <option value="tetra">Tetra Pack</option>
                                     </optgroup>
                                     <option value="other">-- Other --</option>
-                                    </select>
+                                </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label d-flex justify-content-between">
-                                    <span>Quantity</span>
-                                    <span class="text-muted small" id="unitHelp">per item</span>
-                                </label>
+                                <label class="form-label">Unit Value</label>
                                 <div class="input-group">
-                                    <input type="number" class="form-control" name="product_quantity" id="productQuantity" min="0.01" step="0.01" value="1" required>
-                                    <span class="input-group-text bg-light" id="typeUnit">pc</span>
+                                    <input type="number" class="form-control" name="unit_value" id="unitValue" min="0.01" step="0.01" value="1" required>
+                                    <span class="input-group-text bg-light" id="unitDisplay">pc</span>
                                 </div>
+                                <small class="text-muted">The quantity per unit (e.g., 1, 12 for dozen, etc.)</small>
                             </div>
                             <div class="col-12">
-                                <div id="otherProductType" class="d-none">
-                                    <div class="border-top pt-3">
-                                        <label class="form-label">Specify Product Type</label>
-                                        <input type="text" class="form-control" name="other_product_type" placeholder="Enter custom product type">
-                                    </div>
+                                <div id="otherUnitTypeContainer" class="d-none">
+                                    <label class="form-label">Custom Unit Type</label>
+                                    <input type="text" class="form-control" name="other_unit_type" id="otherUnitType" placeholder="e.g., bundle, carton, etc.">
                                 </div>
-                                <div id="piecesPerPackContainer" style="display: none;">
-                                    <div class="border-top pt-3">
-                                        <label class="form-label">Pieces per Pack</label>
-                                        <input type="number" class="form-control" name="pieces_per_pack" id="piecesPerPack" min="1" value="1">
-                                    </div>
+                                <div id="piecesPerPackContainer" class="d-none">
+                                    <label class="form-label">Pieces per Pack</label>
+                                    <input type="number" class="form-control" name="pieces_per_pack" id="piecesPerPack" min="1" value="1" placeholder="e.g., 12">
+                                    <small class="text-muted">Number of individual pieces in one pack</small>
                                 </div>
                             </div>
                         </div>
@@ -223,20 +232,67 @@ include __DIR__ . "/../templates/nav.php";
                         <label class="form-label">Product Name</label>
                         <input type="text" class="form-control" name="product_name" id="editProductName" required>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" name="description" id="editProductDescription" rows="2"></textarea>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Quantity</label>
-                            <input type="number" class="form-control" name="quantity" id="editProductQuantity" min="0" required>
+
+                    <div class="border rounded p-3 mb-3">
+                        <h6 class="mb-3 pb-1 border-bottom fw-semibold text-uppercase small text-muted">Unit Details</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Unit Type</label>
+                                <select name="unit_type" id="editUnitType" class="form-select">
+                                    <option value="">-- Select Unit Type --</option>
+                                    <optgroup label="Weight">
+                                        <option value="g">Gram (g)</option>
+                                        <option value="kg">Kilogram (kg)</option>
+                                    </optgroup>
+                                    <optgroup label="Volume">
+                                        <option value="L">Liter (L)</option>
+                                        <option value="ml">Milliliter (ml)</option>
+                                    </optgroup>
+                                    <optgroup label="Count">
+                                        <option value="pc">Piece (pc)</option>
+                                        <option value="doz">Dozen</option>
+                                        <option value="set">Set</option>
+                                        <option value="tray">Tray</option>
+                                        <option value="pack">Pack</option>
+                                    </optgroup>
+                                    <option value="other">-- Other --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Unit Value</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" name="unit_value" id="editUnitValue" min="0.01" step="0.01" value="1" required>
+                                    <span class="input-group-text bg-light" id="editUnitDisplay">pc</span>
+                                </div>
+                                <small class="text-muted">The quantity per unit (e.g., 1, 12 for dozen, etc.)</small>
+                            </div>
+                            <div class="col-12">
+                                <div id="editOtherUnitTypeContainer" class="d-none">
+                                    <label class="form-label">Custom Unit Type</label>
+                                    <input type="text" class="form-control" name="other_unit_type" id="editOtherUnitType" placeholder="e.g., bundle, carton, etc.">
+                                </div>
+                                <div id="editPiecesPerPackContainer" class="d-none">
+                                    <label class="form-label">Pieces per Pack</label>
+                                    <input type="number" class="form-control" name="pieces_per_pack" id="editPiecesPerPack" min="1" value="1" placeholder="e.g., 12">
+                                    <small class="text-muted">Number of individual pieces in one pack</small>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Price</label>
-                            <div class="input-group">
-                                <span class="input-group-text">₱</span>
-                                <input type="number" class="form-control" name="price" id="editProductPrice" min="0" step="0.01" required>
+                    </div>
+
+                    <div class="border rounded p-3 mb-3">
+                        <h6 class="mb-3 pb-1 border-bottom fw-semibold text-uppercase small text-muted">Inventory Details</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Stock Quantity</label>
+                                <input type="number" class="form-control" name="stock_quantity" id="editProductQuantity" min="0" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Price per Unit</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₱</span>
+                                    <input type="number" class="form-control" name="price_per_unit" id="editProductPrice" min="0" step="0.01" required>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -264,76 +320,191 @@ include __DIR__ . "/../templates/nav.php";
 
 <script>
 $(document).ready(function() {
-    // Update unit display and handle product type changes
+    // Update unit display based on selected unit type
     function updateUnitDisplay() {
-        const type = $('#productType').val();
-        let unit = 'pc';
-        let unitHelp = 'per item';
+        const unitType = $('#unitType').val();
+        let unitDisplay = '';
         
-        // Show/hide pieces per pack
-        if (type === 'pack') {
-            $('#piecesPerPackContainer').show();
-            unit = 'pack';
-            unitHelp = 'per pack';
+        // Show/hide pieces per pack field
+        if (unitType === 'pack') {
+            $('#piecesPerPackContainer').removeClass('d-none');
+            $('#piecesPerPack').prop('required', true);
         } else {
-            $('#piecesPerPackContainer').hide();
-            unitHelp = 'per ' + (type || 'item');
+            $('#piecesPerPackContainer').addClass('d-none');
+            $('#piecesPerPack').prop('required', false);
         }
         
-        // Handle unit display
-        switch(type) {
-            case 'gram': unit = 'g'; break;
-            case 'kilo': unit = 'kg'; break;
-            case 'liter': unit = 'L'; break;
-            case 'ml': unit = 'ml'; break;
-            case 'piece': unit = 'pc'; break;
+        // Update the unit display text
+        switch(unitType) {
+            case 'g': unitDisplay = 'g'; break;
+            case 'kg': unitDisplay = 'kg'; break;
+            case 'L': unitDisplay = 'L'; break;
+            case 'ml': unitDisplay = 'ml'; break;
+            case 'pc': unitDisplay = 'pc'; break;
+            case 'doz': unitDisplay = 'doz'; break;
+            case 'set': unitDisplay = 'set'; break;
+            case 'tray': unitDisplay = 'tray'; break;
+            case 'pack': unitDisplay = 'pack'; break;
             case 'other': 
-                unit = ''; 
-                $('#otherProductType').removeClass('d-none');
-                unitHelp = 'per unit';
+                unitDisplay = 'unit';
+                $('#otherUnitTypeContainer').removeClass('d-none');
                 break;
             default: 
-                if (type !== 'pack') {
-                    unit = 'pc';
-                }
-                $('#otherProductType').addClass('d-none');
+                unitDisplay = 'pc';
+                $('#otherUnitTypeContainer').addClass('d-none');
         }
         
-        $('#typeUnit').text(unit);
-        $('#unitHelp').text(unitHelp);
+        // Update the display and required attributes
+        $('#unitDisplay').text(unitDisplay);
+        
+        // If not 'other', clear any value in other_unit_type
+        if (unitType !== 'other') {
+            $('#otherUnitType').val('');
+        } else {
+            $('#otherUnitType').prop('required', true);
+        }
     }
     
     // Initialize unit display
     updateUnitDisplay();
     
     // Update unit when type changes
-    $('#productType').on('change', updateUnitDisplay);
+    $('#unitType').on('change', updateUnitDisplay);
+    
+    // Form validation for other_unit_type when unit type is 'other'
+    $('form').on('submit', function(e) {
+        if ($('#unitType').val() === 'other' && !$('#otherUnitType').val().trim()) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'error',
+                title: 'Validation Error',
+                text: 'Please specify a custom unit type',
+                confirmButtonText: 'OK'
+            });
+        }
+    });
 
 
-
-    // Initialize DataTable
-    var table = $('#inventoryTable').DataTable({
-        "pageLength": 10, // Default number of entries
-        "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]], // Entries dropdown
-        "order": [[0, 'asc']], // Default sorting by first column
-        "responsive": true,
-        "language": {
-            "search": "_INPUT_",
-            "searchPlaceholder": "Search products...",
-            "lengthMenu": "Show _MENU_ entries",
-            "info": "Showing _START_ to _END_ of _TOTAL_ entries",
-            "infoEmpty": "Showing 0 to 0 of 0 entries",
-            "infoFiltered": "(filtered from _MAX_ total entries)",
-            "paginate": {
-                "first": "First",
-                "last": "Last",
-                "next": "Next",
-                "previous": "Previous"
+    // Initialize DataTable with custom sorting
+    const table = $('#inventoryTable').DataTable({
+        responsive: true,
+        // Disable initial sort to prevent auto-sorting by the first column
+        order: [],
+        // Add created_at column as hidden for sorting
+        columnDefs: [
+            {
+                targets: 0, // # column
+                orderable: false, // Disable sorting for the # column
+                render: function(data, type, row, meta) {
+                    // Just show the row number (1-based)
+                    return meta.row + 1;
+                },
+                className: 'text-center'
+            },
+            { 
+                targets: -1, // Actions column
+                orderable: false,
+                searchable: false
+            },
+            {
+                targets: 1, // Product Name
+                type: 'string'
+            },
+            // Add hidden column for created_at
+            {
+                targets: 6, // This will be a hidden column
+                visible: false,
+                data: 'created_at'
+            }
+        ],
+        // Initial sort by created_at in descending order
+        order: [[6, 'desc']],
+        // Row callback for custom numbering
+        rowCallback: function(row, data, index) {
+            var api = this.api();
+            var page = api.page();
+            var pageInfo = api.page.info();
+            // Calculate row number based on current page and position
+            var rowNum = pageInfo.start + index + 1;
+            $(row).find('td:eq(0)').html(rowNum);
+        },
+        displayStart: 0,
+        columnDefs: [
+            {
+                targets: 0, // # column
+                data: null,
+                render: function(data, type, row, meta) {
+                    // For display, show the row number (1-based index)
+                    if (type === 'display') {
+                        return meta.row + 1;
+                    }
+                    // For sorting, use the row index
+                    return meta.row;
+                },
+                type: 'num',
+                orderSequence: ['asc', 'desc']
+            },
+            { 
+                orderable: false, 
+                targets: [5], // Disable sorting for Actions column
+                searchable: false
+            },
+            {
+                targets: 1, // Product Name (alphabetical sorting)
+                type: 'string'
+            },
+            {
+                targets: 2, // Units (sort by unit type first, then by value)
+                type: 'string',
+                render: function(data, type, row) {
+                    if (type === 'sort') {
+                        // Return an array for multi-column sorting [unit_type, numeric_value]
+                        const matches = data.match(/^([\d.]+)\s+(.+)$/);
+                        if (matches) {
+                            const numericValue = parseFloat(matches[1]) || 0;
+                            const unitType = matches[2] || '';
+                            // Return an array for DataTables to sort by both values
+                            return [unitType.toLowerCase(), numericValue];
+                        }
+                        return ['', 0];
+                    }
+                    return data;
+                }
+            },
+            {
+                targets: 3, // Stock Quantity (numeric sorting)
+                type: 'num'
+            },
+            {
+                targets: 4, // Price (numeric sorting, handle currency symbol)
+                type: 'num',
+                render: function(data, type, row) {
+                    if (type === 'sort') {
+                        return parseFloat(data.replace(/[^0-9.-]+/g,""));
+                    }
+                    return data;
+                }
+            }
+        ],
+        language: {
+            search: "_INPUT_",
+            searchPlaceholder: "Search products...",
+            lengthMenu: "Show _MENU_ entries",
+            info: "Showing _START_ to _END_ of _TOTAL_ entries",
+            infoEmpty: "No entries found",
+            infoFiltered: "(filtered from _MAX_ total entries)",
+            paginate: {
+                first: "First",
+                last: "Last",
+                next: "Next",
+                previous: "Previous"
             }
         },
-        "columnDefs": [
-            { "orderable": false, "targets": [5] } // Disable sorting on Actions column
-        ]
+        dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+             "<'row'<'col-sm-12'tr>>" +
+             "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+        pageLength: 10,  
+        lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]]
     });
 
     // Add custom search input
@@ -349,20 +520,102 @@ $(document).ready(function() {
     $('.edit-product').on('click', function() {
         const productId = $(this).data('id');
         const productName = $(this).data('name');
-        const productDesc = $(this).data('description');
         const productQty = $(this).data('quantity');
         const productPrice = $(this).data('price');
+        let unitType = $(this).data('unit-type');
+        const unitValue = $(this).data('unit-value');
+        const otherUnitType = $(this).data('other-unit-type');
+        const piecesPerPack = $(this).data('pieces-per-pack');
+        
+        // Check if the current unit type is a custom type (exists in other_unit_type)
+        const standardUnitTypes = ['g', 'kg', 'L', 'ml', 'pc', 'doz', 'set', 'tray', 'pack'];
+        const isCustomType = unitType && !standardUnitTypes.includes(unitType);
+        
+        // If it's a custom type, set unitType to 'other' and populate the other_unit_type field
+        if (isCustomType) {
+            $('#editOtherUnitType').val(unitType);
+            unitType = 'other';
+        }
         
         // Populate the edit form
         $('#editProductId').val(productId);
         $('#editProductName').val(productName);
-        $('#editProductDescription').val(productDesc);
         $('#editProductQuantity').val(productQty);
         $('#editProductPrice').val(productPrice);
         
+        // Handle unit type and value
+        $('#editUnitType').val(unitType);
+        $('#editUnitValue').val(unitValue);
+        
+        // Handle other unit type if applicable
+        if (unitType === 'other') {
+            $('#editOtherUnitTypeContainer').removeClass('d-none');
+            // If we have a custom type from the database, use it
+            if (otherUnitType) {
+                $('#editOtherUnitType').val(otherUnitType);
+            }
+        } else {
+            $('#editOtherUnitTypeContainer').addClass('d-none');
+        }
+        
+        // Handle pieces per pack if applicable
+        if (unitType === 'pack' && piecesPerPack) {
+            $('#editPiecesPerPack').val(piecesPerPack);
+        }
+        
+        // Update unit display
+        updateEditUnitDisplay();
+        
         // Show the modal
-        const editModal = new bootstrap.Modal(document.getElementById('editProductModal'));
-        editModal.show();
+        $('#editProductModal').modal('show');
+    });
+    
+    // Function to update unit display in edit modal
+    function updateEditUnitDisplay() {
+        const unitType = $('#editUnitType').val();
+        let unitDisplay = '';
+        
+        // Show/hide pieces per pack field in edit modal
+        if (unitType === 'pack') {
+            $('#editPiecesPerPackContainer').removeClass('d-none');
+            $('#editPiecesPerPack').prop('required', true);
+        } else {
+            $('#editPiecesPerPackContainer').addClass('d-none');
+            $('#editPiecesPerPack').prop('required', false);
+        }
+        
+        switch(unitType) {
+            case 'g': unitDisplay = 'g'; break;
+            case 'kg': unitDisplay = 'kg'; break;
+            case 'L': unitDisplay = 'L'; break;
+            case 'ml': unitDisplay = 'ml'; break;
+            case 'pc': unitDisplay = 'pc'; break;
+            case 'doz': unitDisplay = 'doz'; break;
+            case 'set': unitDisplay = 'set'; break;
+            case 'tray': unitDisplay = 'tray'; break;
+            case 'pack': unitDisplay = 'pack'; break;
+            case 'other': unitDisplay = $('#editOtherUnitType').val() || ''; break;
+            default: unitDisplay = 'unit';
+        }
+        
+        $('#editUnitDisplay').text(unitDisplay);
+    }
+    
+    // Update unit display when unit type changes in edit modal
+    $('#editUnitType').on('change', function() {
+        if ($(this).val() === 'other') {
+            $('#editOtherUnitTypeContainer').removeClass('d-none');
+        } else {
+            $('#editOtherUnitTypeContainer').addClass('d-none');
+        }
+        updateEditUnitDisplay();
+    });
+    
+    // Update unit display when other unit type changes in edit modal
+    $('#editOtherUnitType').on('input', function() {
+        if ($('#editUnitType').val() === 'other') {
+            updateEditUnitDisplay();
+        }
     });
     
     // Handle edit form submission
@@ -470,17 +723,45 @@ if (isset($_SESSION['alert'])) {
     document.addEventListener('DOMContentLoaded', function() {
         Swal.fire({
             title: '<?php echo addslashes($alert['title']); ?>',
-            text: '<?php echo addslashes($alert['message']); ?>',
+            html: '<?php echo addslashes($alert['message']); ?>',
             icon: '<?php echo $alert['icon']; ?>',
             confirmButtonText: 'OK',
-            timer: 3000,
-            timerProgressBar: true,
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false
+            confirmButtonColor: '#4e73df',
+            showCancelButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            allowEnterKey: false,
+            showClass: {
+                popup: 'animate__animated animate__fadeInDown'
+            },
+            hideClass: {
+                popup: 'animate__animated animate__fadeOutUp'
+            },
+            customClass: {
+                confirmButton: 'btn btn-primary',
+                popup: 'swal2-popup-custom'
+            },
+            buttonsStyling: false
         });
     });
     </script>
+    <style>
+    .swal2-popup-custom {
+        border-radius: 0.5rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    .swal2-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+    .swal2-html-container {
+        font-size: 1.1rem;
+    }
+    .swal2-styled.swal2-confirm {
+        padding: 0.5rem 2rem;
+        font-size: 1rem;
+        font-weight: 500;
+    }
     <?php
 }
 ?>
