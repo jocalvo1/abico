@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'config/database.php';
+require_once __DIR__ . '/includes/database.php';
 
 $error = '';
 $success = '';
@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Passwords do not match';
     } else {
         try {
-            $database = new Database();
+            $database = new dbconn();
             $db = $database->getConnection();
             
             // Check if username already exists

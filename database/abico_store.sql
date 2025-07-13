@@ -3,9 +3,15 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
+<<<<<<< HEAD
 -- Generation Time: Jul 12, 2025 at 10:15 AM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
+=======
+-- Generation Time: Jul 12, 2025 at 08:03 PM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.2.12
+>>>>>>> f675cbd9407bad57bf9e632e3b5a7b82eac05c8f
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -66,7 +72,11 @@ INSERT INTO `activity_logs` (`id`, `user_id`, `customer_id`, `action`, `details`
 (20, 3, 6, 'create_customer', 'Added new customer: Jasper', NULL, NULL, NULL, '2025-07-11 08:31:55'),
 (21, 3, 6, 'update_debt', 'Updated customer debt', 0.00, 20.00, 'adjust', '2025-07-11 08:32:20'),
 (22, 3, 6, 'update_debt', 'Updated customer debt', 20.00, 15.00, 'partial', '2025-07-11 08:32:31'),
-(23, 3, 6, 'update_debt', 'Updated customer debt', 15.00, 0.00, 'full', '2025-07-11 08:32:36');
+(23, 3, 6, 'update_debt', 'Updated customer debt', 15.00, 0.00, 'full', '2025-07-11 08:32:36'),
+(24, 3, 4, 'update_debt', 'Updated customer debt', 100.00, 500.00, 'adjust', '2025-07-12 04:59:02'),
+(25, 3, 4, 'update_debt', 'Updated customer debt', 500.00, 0.00, 'partial', '2025-07-12 04:59:16'),
+(26, 3, 7, 'create_customer', 'Added new customer: Jack N Poy', NULL, NULL, NULL, '2025-07-12 05:22:58'),
+(27, 3, 8, 'create_customer', 'Added new customer: Jo', NULL, NULL, NULL, '2025-07-12 16:07:38');
 
 -- --------------------------------------------------------
 
@@ -91,9 +101,11 @@ INSERT INTO `customers` (`id`, `customer_name`, `contact`, `debt`, `created_at`,
 (1, 'Zhedrick Villavecencio', '09065187005', '0', '2025-07-10 12:34:29', '2025-07-10 14:22:27'),
 (2, 'Zhedrick Villavecencio', '09065187005', '350', '2025-07-10 12:34:43', '2025-07-10 14:22:34'),
 (3, 'Zhean B. Villavecencio', '09065187005', '0', '2025-07-10 12:37:07', '2025-07-11 02:19:00'),
-(4, 'joseph calvo', '09065187005', '100', '2025-07-10 13:11:02', '2025-07-11 02:18:52'),
+(4, 'joseph calvo', '09065187005', '0', '2025-07-10 13:11:02', '2025-07-12 04:59:16'),
 (5, 'rodel', '09065187005', '0', '2025-07-10 15:27:11', '2025-07-10 15:27:11'),
-(6, 'Jasper', '09065187005', '0', '2025-07-11 08:31:55', '2025-07-11 08:32:36');
+(6, 'Jasper', '09065187005', '0', '2025-07-11 08:31:55', '2025-07-11 08:32:36'),
+(7, 'Jack N Poy', '09611302308', '0', '2025-07-12 05:22:58', '2025-07-12 05:22:58'),
+(8, 'Jo', '09611302308', '0', '2025-07-12 16:07:38', '2025-07-12 16:07:38');
 
 -- --------------------------------------------------------
 
@@ -130,21 +142,6 @@ INSERT INTO `inventory_activity_log` (`id`, `user_id`, `action`, `description`, 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `payments`
---
-
-CREATE TABLE `payments` (
-  `id` int(11) NOT NULL,
-  `sale_id` int(11) NOT NULL,
-  `amount` decimal(10,2) NOT NULL,
-  `payment_date` timestamp NOT NULL DEFAULT current_timestamp(),
-  `payment_method` enum('cash','credit_card','bank_transfer','other') NOT NULL,
-  `notes` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `products`
 --
 
@@ -165,6 +162,7 @@ CREATE TABLE `products` (
 -- Dumping data for table `products`
 --
 
+<<<<<<< HEAD
 INSERT INTO `products` (`id`, `product_name`, `unit_value`, `unit_type`, `other_unit_type`, `pieces_per_pack`, `stock_quantity`, `price_per_unit`, `created_at`, `updated_at`) VALUES
 (36, 'Fresh Whole Milk', 1, 'L', NULL, NULL, 120, 85.00, '2025-07-11 23:08:39', '2025-07-12 05:08:39'),
 (37, 'FreshScent Bath Soap', 1, 'pack', NULL, 5, 77, 99.00, '2025-07-11 23:10:34', '2025-07-12 05:10:34'),
@@ -173,6 +171,26 @@ INSERT INTO `products` (`id`, `product_name`, `unit_value`, `unit_type`, `other_
 (40, 'UltraBright LED Flashlight', 50, 'g', NULL, NULL, 50, 49.00, '2025-07-12 01:57:28', '2025-07-12 07:57:28'),
 (41, 'UltraBright LED Flashlight', 50, 'g', NULL, NULL, 50, 49.00, '2025-07-12 01:57:45', '2025-07-12 07:57:45'),
 (42, 'Coke', 1, 'pack', NULL, 16, 10, 20.00, '2025-07-12 01:58:25', '2025-07-12 01:59:54');
+=======
+INSERT INTO `products` (`id`, `product_name`, `description`, `quantity`, `price`, `created_at`, `updated_at`) VALUES
+(7, 'Patata', 'fresh from farm', 2000, 20.02, '2025-07-08 10:13:23', '2025-07-09 00:00:17'),
+(11, 'Mang Juan ', '5 GRAM', 100, 15.00, '2025-07-09 04:56:53', '2025-07-10 07:10:32'),
+(13, 'Mang Juan ', 'okay', 100, 15.00, '2025-07-10 04:41:39', '2025-07-10 10:41:39'),
+(14, 'Mang Juan ', 'asda', 100, 20.00, '2025-07-10 04:46:01', '2025-07-10 08:31:47'),
+(15, 'Patata', 'asda', 12, 12.00, '2025-07-10 04:46:09', '2025-07-10 08:31:36'),
+(16, 'Chechs', 'asdf', 3, 0.02, '2025-07-10 04:46:21', '2025-07-10 08:58:18'),
+(19, 'Mang Juan', 'asd', 3, 12.00, '2025-07-10 04:46:52', '2025-07-10 10:46:52'),
+(25, 'BearBrand', 'asd', 20, 20.00, '2025-07-10 09:04:38', '2025-07-10 15:04:38'),
+(27, 'BearBrand', 'asdas', 20, 20.00, '2025-07-10 09:06:54', '2025-07-10 15:06:54'),
+(28, 'Milo', 'champion every day', 10, 10.00, '2025-07-10 09:08:54', '2025-07-10 15:08:54'),
+(29, 'Milo', 'champion every days', 10, 10.00, '2025-07-10 09:09:47', '2025-07-10 09:12:46'),
+(33, 'Patata', 'mn mn', 32, 502.00, '2025-07-10 09:26:26', '2025-07-10 15:26:26'),
+(34, 'Patata', 'asfas', 32, 502.00, '2025-07-10 09:28:27', '2025-07-10 15:28:27'),
+(35, 'Patata', 'sad', 32, 502.00, '2025-07-10 09:30:37', '2025-07-10 15:30:37'),
+(37, 'Patat0', 'asxas', 32, 502.05, '2025-07-10 09:32:41', '2025-07-10 15:32:41'),
+(39, 'CheezIt', 'Cheese, 60 grams', 100, 17.90, '2025-07-10 20:22:54', '2025-07-11 02:34:34'),
+(41, 'skibiditoiletrizzahh', '', 32, 52.00, '2025-07-12 13:47:08', '2025-07-12 04:47:08');
+>>>>>>> f675cbd9407bad57bf9e632e3b5a7b82eac05c8f
 
 -- --------------------------------------------------------
 
@@ -193,6 +211,7 @@ CREATE TABLE `sales` (
 -- --------------------------------------------------------
 
 --
+<<<<<<< HEAD
 -- Table structure for table `sale_items`
 --
 
@@ -208,6 +227,8 @@ CREATE TABLE `sale_items` (
 -- --------------------------------------------------------
 
 --
+=======
+>>>>>>> f675cbd9407bad57bf9e632e3b5a7b82eac05c8f
 -- Table structure for table `users`
 --
 
@@ -256,13 +277,6 @@ ALTER TABLE `inventory_activity_log`
   ADD KEY `idx_product_id` (`product_id`);
 
 --
--- Indexes for table `payments`
---
-ALTER TABLE `payments`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `sale_id` (`sale_id`);
-
---
 -- Indexes for table `products`
 --
 ALTER TABLE `products`
@@ -276,14 +290,6 @@ ALTER TABLE `products`
 ALTER TABLE `sales`
   ADD PRIMARY KEY (`id`),
   ADD KEY `customer_id` (`customer_id`);
-
---
--- Indexes for table `sale_items`
---
-ALTER TABLE `sale_items`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `sale_id` (`sale_id`),
-  ADD KEY `product_id` (`product_id`);
 
 --
 -- Indexes for table `users`
@@ -300,13 +306,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `activity_logs`
 --
 ALTER TABLE `activity_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `inventory_activity_log`
@@ -315,28 +321,20 @@ ALTER TABLE `inventory_activity_log`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
--- AUTO_INCREMENT for table `payments`
---
-ALTER TABLE `payments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
+<<<<<<< HEAD
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+=======
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+>>>>>>> f675cbd9407bad57bf9e632e3b5a7b82eac05c8f
 
 --
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `sale_items`
---
-ALTER TABLE `sale_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -349,16 +347,11 @@ ALTER TABLE `users`
 --
 
 --
--- Constraints for table `payments`
---
-ALTER TABLE `payments`
-  ADD CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`sale_id`) REFERENCES `sales` (`id`) ON DELETE CASCADE;
-
---
 -- Constraints for table `sales`
 --
 ALTER TABLE `sales`
   ADD CONSTRAINT `sales_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL;
+<<<<<<< HEAD
 
 --
 -- Constraints for table `sale_items`
@@ -366,6 +359,8 @@ ALTER TABLE `sales`
 ALTER TABLE `sale_items`
   ADD CONSTRAINT `fk_sale_items_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `sale_items_ibfk_1` FOREIGN KEY (`sale_id`) REFERENCES `sales` (`id`) ON DELETE CASCADE;
+=======
+>>>>>>> f675cbd9407bad57bf9e632e3b5a7b82eac05c8f
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

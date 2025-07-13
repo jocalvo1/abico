@@ -37,7 +37,7 @@ include __DIR__ . "/../templates/nav.php";
                 <th>Name</th>
                 <th>items</th>
                 <th>Total</th>
-                <th>Action</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -65,7 +65,7 @@ include __DIR__ . "/../templates/nav.php";
                 <td>
                   <div class="d-flex gap-2">
                     <a href="view.php?id=TRX-123456" class="btn btn-warning btn-sm" title="View Details"><i class="fas fa-eye"></i></a>
-                    <button class="btn btn-danger btn-sm btn-void" data-id="TRX-123456" data-name="John Doe&apos;s transaction"><i class="fas fa-times"></i></button>
+                    <button class="btn btn-danger btn-sm btn-void" data-id="TRX-123456" title="Void Transaction" data-name="John Doe&apos;s transaction"><i class="fas fa-times"></i></button>
                   </div>
                 </td>
               </tr>
