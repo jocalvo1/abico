@@ -22,8 +22,15 @@ $db = $database->getConnection();
 // Initialize ActivityLog object
 $activityLog = new ActivityLog($db);
 
-// Get all activity logs
-$logs = $activityLog->readAll(1, 1000); // Get all logs for DataTables to handle pagination
+// Get pagination parameters
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$perPage = 20;
+$offset = ($page - 1) * $perPage;
+
+// Get logs and total count
+$logs = $activityLog->readAll($page, $perPage);
+$totalLogs = $activityLog->countAll();
+$totalPages = ceil($totalLogs / $perPage);
 
 // Include template header and sidebar
 include __DIR__ . "/../templates/header.php";
@@ -34,18 +41,19 @@ include __DIR__ . "/../templates/nav.php";
 <div class="container">
     <div class="page-inner">
         <div class="card">
-            <div class="card-header">
-                <div class="d-flex align-items-center">
-                    <h4 class="card-title mb-0">
-                        <div class="btn-group" role="group">
-                            <a href="index.php" class="btn btn-outline-secondary">
-                                <i class="fas fa-users"></i> Inventory
-                            </a>
-                            <a href="activity_log.php" class="btn btn-outline-primary active">
-                                <i class="fas fa-history"></i> Activity Logs
-                            </a>
-                        </div>
-                    </h4>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="card-title mb-0">
+                    <div class="btn-group" role="group">
+                        <a href="index.php" class="btn btn-outline-secondary">
+                            <i class="fas fa-boxes"></i> Inventory
+                        </a>
+                        <a href="activity_log.php" class="btn btn-outline-primary active">
+                            <i class="fas fa-history"></i> Activity Logs
+                        </a>
+                    </div>
+                </h4>
+                <div class="text-muted">
+                    Showing <?= $offset + 1 ?> - <?= min($offset + count($logs), $totalLogs) ?> of <?= $totalLogs ?> entries
                 </div>
             </div>
             <div class="card-body">
@@ -54,105 +62,63 @@ include __DIR__ . "/../templates/nav.php";
                         <thead>
                             <tr>
                                 <th>#</th>
+                                <th>Description</th>
                                 <th>Date & Time</th>
-                                <th>Action</th>
-                                <th>Product</th>
-                                <th>Details</th>
-                                <th>Qty Change</th>
-                                <th>Price Change</th>
                             </tr>
                         </thead>
                         <tbody>
-                        <?php $count = 1; ?>
-                        <?php while ($row = $logs->fetch(PDO::FETCH_ASSOC)): 
-                            $action_badge = '';
-                            $action_icon = '';
-                            $action_class = '';
-                            
-                            switch($row['action']) {
-                                case 'create_product':
-                                    $action_badge = 'Created';
-                                    $action_icon = 'plus-circle';
-                                    $action_class = 'success';
-                                    break;
-                                case 'update_product':
-                                    $action_badge = 'Updated';
-                                    $action_icon = 'edit';
-                                    $action_class = 'primary';
-                                    break;
-                                case 'delete_product':
-                                    $action_badge = 'Deleted';
-                                    $action_icon = 'trash-alt';
-                                    $action_class = 'danger';
-                                    break;
-                                case 'stock_in':
-                                    $action_badge = 'Stock In';
-                                    $action_icon = 'arrow-down';
-                                    $action_class = 'success';
-                                    break;
-                                case 'stock_out':
-                                    $action_badge = 'Stock Out';
-                                    $action_icon = 'arrow-up';
-                                    $action_class = 'warning';
-                                    break;
-                                default:
-                                    $action_badge = ucwords(str_replace('_', ' ', $row['action']));
-                                    $action_icon = 'info-circle';
-                                    $action_class = 'secondary';
-                            }
-                            
-                            $qty_change = '';
-                            if ($row['old_quantity'] !== null && $row['new_quantity'] !== null) {
-                                $diff = $row['new_quantity'] - $row['old_quantity'];
-                                if ($diff > 0) {
-                                    $qty_change = '<span class="text-success">+' . $diff . '</span>';
-                                } elseif ($diff < 0) {
-                                    $qty_change = '<span class="text-danger">' . $diff . '</span>';
-                                } else {
-                                    $qty_change = '<span class="text-muted">-</span>';
-                                }
-                            }
-                            
-                            $price_change = '';
-                            if ($row['old_price'] !== null && $row['new_price'] !== null) {
-                                $price_diff = $row['new_price'] - $row['old_price'];
-                                if ($price_diff > 0) {
-                                    $price_change = '<span class="text-success">+₱' . number_format($price_diff, 2) . '</span>';
-                                } elseif ($price_diff < 0) {
-                                    $price_change = '<span class="text-danger">-₱' . number_format(abs($price_diff), 2) . '</span>';
-                                } else {
-                                    $price_change = '<span class="text-muted">-</span>';
-                                }
-                            }
+                        <?php foreach ($logs as $index => $row): 
+                            $rowNumber = $offset + $index + 1;
+                            $actionClass = $activityLog->getActionClass($row['action']);
+                            $description = $activityLog->formatDescription($row);
+                            $timeAgo = $activityLog->timeElapsedString($row['created_at']);
                         ?>
                         <tr>
-                            <td><?= $count++ ?></td>
+                            <td><?= $rowNumber ?></td>
+                            <td>
+                                    <div class="d-flex">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex flex-column">
+                                            <div class="mb-1"><?= $description ?></div>
+                                            <?php 
+                                            // Show changes directly in the description if available
+                                            if (!empty($row['old_values']) || !empty($row['new_values'])) {
+                                                $old = json_decode($row['old_values'] ?? '{}', true);
+                                                $new = json_decode($row['new_values'] ?? '{}', true);
+                                                
+                                                $changes = [];
+                                                foreach ($new as $field => $value) {
+                                                    $oldVal = $old[$field] ?? '';
+                                                    if ($oldVal != $value) {
+                                                        $changes[] = ucfirst(str_replace('_', ' ', $field)) . ": $oldVal → $value";
+                                                    }
+                                                }
+                                                
+                                                if (!empty($changes)) {
+                                                    echo '<div class="small text-muted">' . 
+                                                         implode(' • ', $changes) . 
+                                                         '</div>';
+                                                }
+                                            }
+                                            ?>
+                                            <small class="text-muted">
+                                                <i class="far fa-clock me-1"></i>
+                                                <?= $timeAgo ?>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
                             <td data-order="<?= strtotime($row['created_at']) ?>">
                                 <?= date('M j, Y h:i A', strtotime($row['created_at'])) ?>
                             </td>
-                            <td>
-                                <span class="badge bg-<?= $action_class ?>">
-                                    <i class="fas fa-<?= $action_icon ?> me-1"></i>
-                                    <?= $action_badge ?>
-                                </span>
-                            </td>
-                            <td>
-                                <?php if ($row['product_name']): ?>
-                                    <a href="edit_product.php?id=<?= $row['product_id'] ?>" class="text-primary">
-                                        <?= htmlspecialchars(mb_strimwidth($row['product_name'], 0, 30, "...")) ?>
-                                    </a>
-                                <?php else: ?>
-                                    <span class="text-muted">Product #<?= $row['product_id'] ?></span>
-                                <?php endif; ?>
-                            </td>
-                            <td><?= nl2br(htmlspecialchars(mb_strimwidth($row['details'], 0, 30, "..."))) ?></td>
-                            <td class="text-center"><?= $qty_change ?: '<span class="text-muted">-</span>' ?></td>
-                            <td class="text-center"><?= $price_change ?: '<span class="text-muted">-</span>' ?></td>
                         </tr>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
+
+            <!-- DataTables will handle pagination -->
         </div>
     </div>
 </div>
@@ -160,29 +126,58 @@ include __DIR__ . "/../templates/nav.php";
 <?php include __DIR__ . "/../templates/footer.php"; ?>
 <?php include __DIR__ . "/../templates/scripts.php"; ?>
 
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+
 <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
 $(document).ready(function() {
-    // Initialize DataTable
-    var table = $('#activityTable').DataTable({
-        "pageLength": 10,
-        "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
-        "order": [[1, "desc"]],
-        "responsive": true,
-        "language": {
-            "search": "",
-            "searchPlaceholder": "Search logs..."
+    // Initialize DataTable with pagination
+    $('#activityTable').DataTable({
+        responsive: true,
+        order: [[2, 'desc']], // Sort by date descending
+        columnDefs: [
+            {
+                targets: 0, // # column
+                orderable: false,
+                className: 'text-center'
+            },
+            {
+                targets: 2, // Date column
+                className: 'text-nowrap'
+            }
+        ],
+        language: {
+            search: "_INPUT_",
+            searchPlaceholder: "Search logs...",
+            lengthMenu: "Show _MENU_ entries",
+            info: "Showing _START_ to _END_ of _TOTAL_ entries",
+            infoEmpty: "No entries found",
+            infoFiltered: "(filtered from _MAX_ total entries)",
+            paginate: {
+                first: "First",
+                last: "Last",
+                next: "Next",
+                previous: "Previous"
+            }
         },
-        "columnDefs": [
-            { "orderable": false, "targets": [0] },
-            { "className": "text-center", "targets": [5, 6] }
-        ]
+        dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+             "<'row'<'col-sm-12'tr>>" +
+             "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+        pageLength: 10,  
+        lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]]
     });
     
-    // Style search input
-    $('.dataTables_filter input').addClass('form-control form-control-sm');
+    // Add custom search input
+    $('.dataTables_filter input').addClass('form-control mb-3');
+    
+    // Add custom length menu
+    $('.dataTables_length select').addClass('form-select mb-3');
+    
+    // Style pagination
+    $('.dataTables_paginate').addClass('mt-3');
 });
 </script>
 
