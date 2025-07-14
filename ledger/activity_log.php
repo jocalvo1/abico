@@ -2,11 +2,11 @@
 // Include required files
 require_once __DIR__ . '/../includes/database.php';
 require_once __DIR__ . '/../includes/session.php';
-require_once __DIR__ . '/../includes/activity_log.php';
-require_once __DIR__ . '/../includes/customer.php';
+require_once __DIR__ . '/../includes/ledger/activity_log.php';
+require_once __DIR__ . '/../includes/ledger/customer_list.php';
 
 // Initialize session
-$session = new session();
+$session = new Session();
 $session->init();
 
 // Check if user is logged in
@@ -24,190 +24,211 @@ $activityLog = new ActivityLog($db);
 
 // Get pagination parameters
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$per_page = 10;
-$start = ($page > 1) ? ($page - 1) * $per_page : 0;
+$perPage = 20;
+$offset = ($page - 1) * $perPage;
 
-// Get total records
-$total_records = $activityLog->countAll();
-$total_pages = ceil($total_records / $per_page);
-
-// Get activity logs
-$stmt = $activityLog->readAll($start, $per_page);
+// Get logs and total count
+$stmt = $activityLog->readAll(0, 1000); // Get all logs for DataTable to handle pagination
+$totalLogs = $activityLog->countAll();
 
 // Include template header and sidebar
-include __DIR__ . "/../templates/links.php";
+include __DIR__ . "/../templates/header.php";
 include __DIR__ . "/../templates/sidebar.php";
+include __DIR__ . "/../templates/nav.php";
 ?>
 
-<div class="main-panel">
-    <?php include __DIR__ . "/../templates/header.php"; ?>
-    
-    <div class="content">
-        <div class="page-inner">
-            <div class="page-header">
-                <h4 class="page-title">Activity Logs</h4>
-                <ul class="breadcrumbs">
-                    <li class="nav-home">
-                        <a href="/ABICO">
-                            <i class="flaticon-home"></i>
+<div class="container">
+    <div class="page-inner">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="card-title mb-0">
+                    <div class="btn-group" role="group">
+                        <a href="index.php" class="btn btn-outline-secondary">
+                            <i class="fas fa-users"></i> Customer List
                         </a>
-                    </li>
-                    <li class="separator">
-                        <i class="flaticon-right-arrow"></i>
-                    </li>
-                    <li class="nav-item">
-                        <a href="/ABICO/ledger/">Ledger</a>
-                    </li>
-                    <li class="separator">
-                        <i class="flaticon-right-arrow"></i>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#">Activity Logs</a>
-                    </li>
-                </ul>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center">
-                                    <h4 class="card-title mb-0">
-                                        <div class="btn-group" role="group">
-                                            <a href="index.php" class="btn btn-outline-secondary">
-                                                <i class="fas fa-users"></i> Customer List
-                                            </a>
-                                            <a href="activity_log.php" class="btn btn-outline-primary active">
-                                                <i class="fas fa-history"></i> Activity Logs
-                                            </a>
-                                        </div>
-                                    </h4>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table id="activityTable" class="display table table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Date & Time</th>
-                                            <th>Action</th>
-                                            <th>Customer</th>
-                                            <th>Details</th>
-                                            <th>Old Value</th>
-                                            <th>New Value</th>
-                                            <th>Type</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php while ($row = $stmt->fetch(PDO::FETCH_ASSOC)): ?>
-                                        <tr>
-                                            <td><?= date('M d, Y h:i A', strtotime($row['created_at'])) ?></td>
-                                            <td>
-                                                <?php 
-                                                    $badge_class = 'info';
-                                                    if (strpos($row['action'], 'create') !== false) $badge_class = 'success';
-                                                    elseif (strpos($row['action'], 'update') !== false) $badge_class = 'warning';
-                                                    elseif (strpos($row['action'], 'delete') !== false) $badge_class = 'danger';
-                                                ?>
-                                                <span class="badge badge-<?= $badge_class ?>">
-                                                    <?= ucwords(str_replace('_', ' ', $row['action'])) ?>
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <?php if ($row['customer_id']): ?>
-                                                    <a href="/ABICO/ledger/?search=<?= urlencode($row['customer_name']) ?>">
-                                                        <?= htmlspecialchars($row['customer_name']) ?>
-                                                    </a>
-                                                <?php else: ?>
-                                                    System
-                                                <?php endif; ?>
-                                            </td>
-                                            <td><?= htmlspecialchars($row['details']) ?></td>
-                                            <td class="text-danger">
-                                                <?= $row['old_value'] !== null ? '₱' . number_format($row['old_value'], 2) : '-' ?>
-                                            </td>
-                                            <td class="text-success">
-                                                <?= $row['new_value'] !== null ? '₱' . number_format($row['new_value'], 2) : '-' ?>
-                                            </td>
-                                            <td>
-                                                <?php if ($row['update_type']): ?>
-                                                    <?= ucfirst($row['update_type']) ?>
-                                                <?php else: ?>
-                                                    -
-                                                <?php endif; ?>
-                                            </td>
-                                        </tr>
-                                        <?php endwhile; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <?php if ($total_pages > 1): ?>
-                        <div class="card-footer">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    Showing <?= ($start + 1) ?> to <?= min(($start + $per_page), $total_records) ?> of <?= $total_records ?> entries
-                                </div>
-                                <ul class="pagination">
-                                    <?php if ($page > 1): ?>
-                                        <li class="page-item">
-                                            <a class="page-link" href="?page=<?= ($page - 1) ?>">Previous</a>
-                                        </li>
-                                    <?php endif; ?>
-                                    
-                                    <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                                        <li class="page-item <?= ($i == $page) ? 'active' : '' ?>">
-                                            <a class="page-link" href="?page=<?= $i ?>"><?= $i ?></a>
-                                        </li>
-                                    <?php endfor; ?>
-                                    
-                                    <?php if ($page < $total_pages): ?>
-                                        <li class="page-item">
-                                            <a class="page-link" href="?page=<?= ($page + 1) ?>">Next</a>
-                                        </li>
-                                    <?php endif; ?>
-                                </ul>
-                            </div>
-                        </div>
-                        <?php endif; ?>
+                        <a href="activity_log.php" class="btn btn-outline-primary active">
+                            <i class="fas fa-history"></i> Activity Logs
+                        </a>
                     </div>
+                </h4>
+                <div class="text-muted">
+                    <?= $totalLogs ?> total entries
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="activityTable" class="table table-hover table-striped" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Description</th>
+                                <th>Date & Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            $rowNumber = 0;
+                            try {
+                                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)): 
+                                    $rowNumber++;
+                                    $badge_class = 'info';
+                                    if (strpos($row['action'], 'create') !== false) $badge_class = 'success';
+                                    elseif (strpos($row['action'], 'update') !== false) $badge_class = 'warning';
+                                    elseif (strpos($row['action'], 'delete') !== false) $badge_class = 'danger';
+                                    
+                                    // Format the time ago
+                                    $timeAgo = time_elapsed_string($row['created_at']);
+                                    
+                                    // Format the description
+                                    $description = htmlspecialchars($row['details']);
+                                    if (!empty($row['customer_name'])) {
+                                        $customerLink = '<a href="index.php?search=' . urlencode($row['customer_name']) . '">' . 
+                                                      htmlspecialchars($row['customer_name']) . '</a>';
+                                    } else {
+                                        $customerLink = '<span class="text-muted">System</span>';
+                                    }
+                                    
+                                    // Add value changes if available
+                                    $valueInfo = '';
+                                    if ($row['old_value'] !== null || $row['new_value'] !== null) {
+                                        $oldVal = $row['old_value'] !== null ? '₱' . number_format($row['old_value'], 2) : 'N/A';
+                                        $newVal = $row['new_value'] !== null ? '₱' . number_format($row['new_value'], 2) : 'N/A';
+                                        if ($oldVal !== 'N/A' || $newVal !== 'N/A') {
+                                            $valueInfo = '<div class="small text-muted">' . 
+                                                       'Changed from ' . $oldVal . ' to ' . $newVal . 
+                                                       '</div>';
+                                        }
+                                    }
+                            ?>
+                            <tr>
+                                <td><?= $rowNumber ?></td>
+                                <td>
+                                    <div class="d-flex">
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex flex-column">
+                                                <div class="mb-1">
+                                                    <span class="badge bg-<?= $badge_class ?> me-2">
+                                                        <?= ucwords(str_replace('_', ' ', $row['action'])) ?>
+                                                    </span>
+                                                    <?= $customerLink ?>: <?= $description ?>
+                                                    <?php if (!empty($row['update_type'])): ?>
+                                                        <span class="badge bg-secondary"><?= ucfirst($row['update_type']) ?></span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <?= $valueInfo ?>
+                                                <small class="text-muted">
+                                                    <i class="far fa-clock me-1"></i>
+                                                    <?= $timeAgo ?>
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td data-order="<?= strtotime($row['created_at']) ?>">
+                                    <?= date('M j, Y h:i A', strtotime($row['created_at'])) ?>
+                                </td>
+                            </tr>
+                            <?php 
+                                endwhile;
+                            } catch (Exception $e) {
+                                error_log('Error loading activity logs: ' . $e->getMessage());
+                                $_SESSION['error_message'] = 'Failed to load activity logs. Please try again.';
+                            }
+                            ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<?php include __DIR__ . "/../templates/footer.php"; ?>
+<?php 
+// Function to format time elapsed
+function time_elapsed_string($datetime, $full = false) {
+    $now = new DateTime;
+    $ago = new DateTime($datetime);
+    $diff = $now->diff($ago);
 
-<!--   Core JS Files   -->
-<script src="/ABICO/assets/js/core/jquery-3.7.1.min.js"></script>
-<script src="/ABICO/assets/js/core/popper.min.js"></script>
-<script src="/ABICO/assets/js/core/bootstrap.min.js"></script>
-<script src="/ABICO/assets/js/plugin/datatables/datatables.min.js"></script>
+    $diff->w = floor($diff->d / 7);
+    $diff->d -= $diff->w * 7;
+
+    $string = array(
+        'y' => 'year',
+        'm' => 'month',
+        'w' => 'week',
+        'd' => 'day',
+        'h' => 'hour',
+        'i' => 'minute',
+        's' => 'second',
+    );
+    
+    foreach ($string as $k => &$v) {
+        if ($diff->$k) {
+            $v = $diff->$k . ' ' . $v . ($diff->$k > 1 ? 's' : '');
+        } else {
+            unset($string[$k]);
+        }
+    }
+
+    if (!$full) $string = array_slice($string, 0, 1);
+    return $string ? implode(', ', $string) . ' ago' : 'just now';
+}
+?>
+
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
-    $(document).ready(function() {
-        // Initialize DataTable
-        $('#activityTable').DataTable({
-            "pageLength": 50,
-            "order": [[0, "desc"]],
-            "language": {
-                "search": "",
-                "searchPlaceholder": "Search logs...",
-                "lengthMenu": "Show _MENU_ entries per page",
-                "info": "Showing _START_ to _END_ of _TOTAL_ entries",
-                "infoEmpty": "No entries found",
-                "infoFiltered": "(filtered from _MAX_ total entries)",
-                "paginate": {
-                    "previous": "<i class='fas fa-chevron-left'></i>",
-                    "next": "<i class='fas fa-chevron-right'></i>"
-                }
+$(document).ready(function() {
+    // Initialize DataTable with pagination
+    $('#activityTable').DataTable({
+        responsive: true,
+        order: [[2, 'desc']], // Sort by date descending
+        columnDefs: [
+            {
+                targets: 0, // # column
+                orderable: false,
+                className: 'text-center',
+                width: '50px'
             },
-            "columnDefs": [
-                { "orderable": false, "targets": [1, 2, 3, 4, 5, 6] }
-            ]
-        });
+            {
+                targets: 2, // Date column
+                className: 'text-nowrap',
+                width: '180px'
+            }
+        ],
+        language: {
+            search: "_INPUT_",
+            searchPlaceholder: "Search logs...",
+            lengthMenu: "Show _MENU_ entries",
+            info: "Showing _START_ to _END_ of _TOTAL_ entries",
+            infoEmpty: "No entries found",
+            infoFiltered: "(filtered from _MAX_ total entries)",
+            paginate: {
+                first: "First",
+                last: "Last",
+                next: "Next",
+                previous: "Previous"
+            }
+        },
+        dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+             "<'row'<'col-sm-12'tr>>" +
+             "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+        pageLength: 10,  
+        lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]]
     });
+    
+    // Add custom search input
+    $('.dataTables_filter input').addClass('form-control mb-3');
+    
+    // Add custom length menu
+    $('.dataTables_length select').addClass('form-select mb-3');
+    
+    // Style pagination
+    $('.dataTables_paginate').addClass('mt-3');
+});
 </script>
