@@ -68,7 +68,7 @@ class product {
                     COALESCE(other_unit_type, unit_type) as unit_type,
                     other_unit_type,
                     pieces_per_pack,
-                    stock_quantity as quantity,
+                    stock_quantity,
                     price_per_unit as price,
                     created_at,
                     updated_at

@@ -29,10 +29,116 @@ class Transaction {
         return $row ? (int)$row['id'] : null;
     }
 
+    // Log sales activity
+    private function logSalesActivity() {
+        $query = "INSERT INTO sales_activity_log (transaction_id, customer_name, description) 
+                 VALUES (:transaction_id, :customer_name, :description)";
+        
+        $stmt = $this->conn->prepare($query);
+        
+        // Count the number of items
+        $item_count = count($this->items);
+        
+        // Build the description
+        $description = "Customer {$this->customer_name} bought {$item_count} items for ₱" . number_format($this->total_amount, 2);
+        
+        // Bind parameters
+        $stmt->bindParam(":transaction_id", $this->id);
+        $stmt->bindParam(":customer_name", $this->customer_name);
+        $stmt->bindParam(":description", $description);
+        
+        // Execute the query
+        return $stmt->execute();
+    }
+
     // Create a new transaction
     public function create() {
         try {
             // Start transaction
+            $this->conn->beginTransaction();
+
+            // Insert into transactions table
+            $query = "INSERT INTO " . $this->table_name . " 
+                     SET customer_id = :customer_id,
+                         customer_name = :customer_name,
+                         total_amount = :total_amount,
+                         payment_method = :payment_method,
+                         payment_method_id = :payment_method_id,
+                         amount_received = :amount_received,
+                         change_amount = :change_amount";
+
+            $stmt = $this->conn->prepare($query);
+
+            // Clean data
+            $this->customer_id = htmlspecialchars(strip_tags($this->customer_id));
+            $this->customer_name = htmlspecialchars(strip_tags($this->customer_name));
+            $this->total_amount = htmlspecialchars(strip_tags($this->total_amount));
+            $this->payment_method = htmlspecialchars(strip_tags($this->payment_method));
+            $this->amount_received = htmlspecialchars(strip_tags($this->amount_received));
+            $this->change_amount = htmlspecialchars(strip_tags($this->change_amount));
+
+            // Get payment method ID
+            $payment_method_id = $this->getPaymentMethodId($this->payment_method);
+
+            // Bind data
+            $stmt->bindParam(":customer_id", $this->customer_id);
+            $stmt->bindParam(":customer_name", $this->customer_name);
+            $stmt->bindParam(":total_amount", $this->total_amount);
+            $stmt->bindParam(":payment_method", $this->payment_method);
+            $stmt->bindParam(":payment_method_id", $payment_method_id);
+            $stmt->bindParam(":amount_received", $this->amount_received);
+            $stmt->bindParam(":change_amount", $this->change_amount);
+
+            // Execute query
+            if($stmt->execute()) {
+                // Get inserted ID
+                $this->id = $this->conn->lastInsertId();
+
+                // Insert sale items
+                foreach($this->items as $item) {
+                    $query = "INSERT INTO " . $this->items_table . " 
+                             SET transaction_id = :transaction_id,
+                                 product_id = :product_id,
+                                 product_name = :product_name,
+                                 quantity = :quantity,
+                                 price = :price,
+                                 subtotal = :subtotal";
+
+                    $stmt = $this->conn->prepare($query);
+
+                    // Clean data
+                    $item['product_id'] = htmlspecialchars(strip_tags($item['product_id']));
+                    $item['product_name'] = htmlspecialchars(strip_tags($item['product_name']));
+                    $item['quantity'] = htmlspecialchars(strip_tags($item['quantity']));
+                    $item['price'] = htmlspecialchars(strip_tags($item['price']));
+                    $item['subtotal'] = htmlspecialchars(strip_tags($item['subtotal']));
+
+                    // Bind data
+                    $stmt->bindParam(":transaction_id", $this->id);
+                    $stmt->bindParam(":product_id", $item['product_id']);
+                    $stmt->bindParam(":product_name", $item['product_name']);
+                    $stmt->bindParam(":quantity", $item['quantity']);
+                    $stmt->bindParam(":price", $item['price']);
+                    $stmt->bindParam(":subtotal", $item['subtotal']);
+
+                    // Execute query
+                    if(!$stmt->execute()) {
+                        throw new Exception("Error inserting sale item");
+                    }
+                }
+
+                // Log sales activity
+                if(!$this->logSalesActivity()) {
+                    throw new Exception("Error logging sales activity");
+                }
+
+                // Commit transaction
+                $this->conn->commit();
+
+                return true;
+            }
+
+            return false;            // Start transaction
             $this->conn->beginTransaction();
 
             // Get payment method ID
@@ -43,8 +149,8 @@ class Transaction {
 
             // Insert transaction
             $query = "INSERT INTO " . $this->table_name . " 
-                     (customer_id, customer_name, total_amount, payment_method_id, amount_received, change_amount, created_at)
-                     VALUES (:customer_id, :customer_name, :total_amount, :payment_method_id, :amount_received, :change_amount, NOW())";
+                     (customer_id, customer_name, total_amount, payment_method_id, payment_method, amount_received, change_amount, created_at)
+                     VALUES (:customer_id, :customer_name, :total_amount, :payment_method_id, :payment_method, :amount_received, :change_amount, NOW())";
             
             $stmt = $this->conn->prepare($query);
 
@@ -59,6 +165,7 @@ class Transaction {
             $stmt->bindParam(":customer_name", $this->customer_name);
             $stmt->bindParam(":total_amount", $this->total_amount);
             $stmt->bindParam(":payment_method_id", $paymentMethodId, PDO::PARAM_INT);
+            $stmt->bindParam(":payment_method", $this->payment_method);
             $stmt->bindParam(":amount_received", $this->amount_received);
             $stmt->bindParam(":change_amount", $this->change_amount);
 
@@ -107,7 +214,7 @@ class Transaction {
                 
                 // Update product quantities
                 foreach ($this->items as $item) {
-                    $updateQuery = "UPDATE products SET quantity = quantity - :quantity WHERE id = :product_id";
+                    $updateQuery = "UPDATE products SET stock_quantity = stock_quantity - :quantity WHERE id = :product_id";
                     $updateStmt = $this->conn->prepare($updateQuery);
                     $updateStmt->bindParam(":quantity", $item['quantity'], PDO::PARAM_INT);
                     $updateStmt->bindParam(":product_id", $item['id'], PDO::PARAM_INT);

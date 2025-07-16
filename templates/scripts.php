@@ -30,9 +30,6 @@
 <!-- Kaiadmin JS -->
 <script src="<?= $base; ?>/assets/js/kaiadmin.min.js"></script>
 
-<!-- Kaiadmin DEMO methods, don't include it in your project! -->
-<script src="<?= $base; ?>/assets/js/setting-demo.js"></script>
-<script src="<?= $base; ?>/assets/js/demo.js"></script>
 <script>
   $("#lineChart").sparkline([102, 109, 120, 99, 110, 105, 115], {
     type: "line",

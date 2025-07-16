@@ -68,8 +68,8 @@ $products = $product->readAll();
                     <div class="card-body">
                         <div class="mb-3">
                             <label for="customerSelect" class="form-label">Select Customer</label>
-                            <div class="input-group">
-                                <select class="form-select" id="customerSelect">
+                            <div class="d-flex align-items-center gap-1">
+                                <select class="form-select flex-grow-1" id="customerSelect">
                                     <option value="">Walk-in Customer</option>
                                     <?php 
                                     $customer = new Customer($db);
@@ -84,8 +84,8 @@ $products = $product->readAll();
                                     }
                                     ?>
                                 </select>
-                                <button class="btn btn-outline-success" type="button" id="newCustomerBtn" data-bs-toggle="modal" data-bs-target="#newCustomerModal">
-                                    <i class="fas fa-plus"></i> New
+                                <button class="btn btn-outline-success btn-sm" type="button" id="newCustomerBtn" data-bs-toggle="modal" data-bs-target="#newCustomerModal">
+                                    <i class="fas fa-plus me-1"></i>New
                                 </button>
                             </div>
                             <input type="hidden" id="customerId" value="">
@@ -97,7 +97,7 @@ $products = $product->readAll();
                                 <thead>
                                     <tr>
                                         <th>Name</th>
-                                        <th>Description</th>
+                                        <th>Unit</th>
                                         <th>Price</th>
                                         <th>Qty</th>
                                         <th>Action</th>
@@ -109,13 +109,13 @@ $products = $product->readAll();
                                         <td title="<?php echo htmlspecialchars($row['product_name']); ?>">
                                             <?php 
                                             $name = htmlspecialchars($row['product_name']);
-                                            echo strlen($name) > 20 ? substr($name, 0, 20) . '...' : $name; 
+                                            echo strlen($name) > 30 ? substr($name, 0, 30) . '...' : $name; 
                                             ?>
                                         </td>
-                                        <td title="<?php echo htmlspecialchars($row['description']); ?>">
+                                        <td title="<?php echo htmlspecialchars($row['unit_value'] . ' ' . $row['unit_type']); ?>">
                                             <?php 
-                                            $desc = htmlspecialchars($row['description']);
-                                            echo strlen($desc) > 20 ? substr($desc, 0, 20) . '...' : $desc; 
+                                            $unit = htmlspecialchars($row['unit_value'] . ' ' . $row['unit_type']);
+                                            echo strlen($unit) > 10 ? substr($unit, 0, 10) . '...' : $unit; 
                                             ?>
                                         </td>
                                         <td>₱<?php echo number_format($row['price'], 2); ?></td>
@@ -126,18 +126,18 @@ $products = $product->readAll();
                                                        class="form-control text-center product-quantity" 
                                                        value="1" 
                                                        min="1" 
-                                                       max="<?php echo $row['quantity']; ?>"
+                                                       max="<?php echo $row['stock_quantity']; ?>"
                                                        style="width: 50px;">
                                                 <button class="btn btn-outline-secondary quantity-btn increase">+</button>
                                             </div>
-                                            <small class="text-muted">In stock: <?php echo $row['quantity']; ?></small>
+                                            <small class="text-muted">In stock: <?php echo $row['stock_quantity']; ?></small>
                                         </td>
                                         <td>
                                             <button class="btn btn-sm btn-primary add-to-cart" 
                                                     data-id="<?php echo $row['id']; ?>"
                                                     data-name="<?php echo htmlspecialchars($row['product_name']); ?>" 
                                                     data-price="<?php echo $row['price']; ?>"
-                                                    data-stock="<?php echo $row['quantity']; ?>">
+                                                    data-stock="<?php echo $row['stock_quantity']; ?>">
                                                 <i class="fas fa-plus me-1"></i> Add
                                             </button>
                                         </td>
@@ -352,9 +352,8 @@ $products = $product->readAll();
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
     <script>
-        $(document).ready(function() {
+         $(document).ready(function() {
             // Initialize Select2 for customer search
             $('#customerSelect').select2({
                 placeholder: 'Search customer...',
@@ -459,7 +458,7 @@ $products = $product->readAll();
                 const button = $(this);
                 const name = button.data('name');
                 const price = parseFloat(button.data('price'));
-                const maxStock = parseInt(button.data('stock'));
+                const maxStock = parseInt(button.data('stock_quantity'));
                 const quantity = parseInt(button.closest('tr').find('.product-quantity').val());
                 
                 // Check if product is out of stock
@@ -507,7 +506,7 @@ $products = $product->readAll();
                         price: price,
                         quantity: quantity,
                         total: price * quantity,
-                        stock: maxStock
+                        stock_quantity: maxStock
                     });
                 }
                 
@@ -799,11 +798,11 @@ $products = $product->readAll();
                     customer_id: customerId || null,
                     customer_name: customerName,
                     items: cart.map(({ id, name, price, quantity, total }) => ({
-                        id,
-                        name,
+                        product_id: id,
+                        product_name: name,
                         price: parseFloat(price),
                         quantity: parseInt(quantity, 10),
-                        total: parseFloat(total)
+                        subtotal: parseFloat(total)
                     })),
                     payment_method: paymentMethod,
                     amount_received: amountReceived,
@@ -854,5 +853,6 @@ $products = $product->readAll();
             updateCart();
         });
     </script>
+    
 </body>
 </html>

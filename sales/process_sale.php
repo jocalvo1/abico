@@ -1,4 +1,8 @@
 <?php
+// Disable error reporting to prevent HTML output
+error_reporting(0);
+ini_set('display_errors', 0);
+
 // Start the session
 session_start();
 
@@ -18,12 +22,32 @@ header('Content-Type: application/json');
 
 // Get the raw POST data
 $json = file_get_contents('php://input');
-$data = json_decode($json, true);
 
-// Validate input
-if (empty($data) || !isset($data['items']) || empty($data['items'])) {
+// Validate JSON input
+if (empty($json)) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Invalid request data']);
+    echo json_encode(['success' => false, 'message' => 'No data received']);
+    exit;
+}
+
+// Decode JSON data
+$data = json_decode($json, true);
+if (json_last_error() !== JSON_ERROR_NONE) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Invalid JSON data: ' . json_last_error_msg()
+    ]);
+    exit;
+}
+
+// Validate required fields
+if (empty($data['items']) || !isset($data['customer_name']) || !isset($data['payment_method'])) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Missing required fields'
+    ]);
     exit;
 }
 
@@ -59,13 +83,17 @@ try {
     } else {
         throw new Exception('Failed to process transaction');
     }
-    
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Error: ' . $e->getMessage(),
-        'trace' => $e->getTraceAsString()
+        'message' => 'Error processing payment: ' . $e->getMessage()
+    ]);
+} catch (Error $e) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error processing payment: ' . $e->getMessage()
     ]);
 }
 ?>

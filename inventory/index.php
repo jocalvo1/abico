@@ -713,6 +713,8 @@ $(document).ready(function() {
 });
 </script>
 
+</body>
+</html>
 <?php
 // Display SweetAlert if there's a message in the session
 if (isset($_SESSION['alert'])) {
@@ -765,6 +767,3 @@ if (isset($_SESSION['alert'])) {
     <?php
 }
 ?>
-
-</body>
-</html>

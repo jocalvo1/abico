@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../includes/database.php';
+require_once __DIR__ . '/../includes/sales/transaction_history.php';
 
 $session = new session();
 $session->init();
@@ -11,6 +12,13 @@ if (!$session->get('login')) {
     header('Location: ../login.php');
     exit();
 }
+
+// Initialize database connection
+$database = new dbconn();
+$db = $database->getConnection();
+
+// Initialize TransactionHistory object
+$transactionHistory = new TransactionHistory($db);
 
 include __DIR__ . "/../templates/header.php";
 include __DIR__ . "/../templates/sidebar.php";
@@ -22,175 +30,114 @@ include __DIR__ . "/../templates/nav.php";
     <div class="card">
       <div class="card-header">
         <div class="d-flex justify-content-between align-items-center">
-          <h3 class="card-title fw-bold mb-0">Transaction History</h3>
-          <a href="create.php" class="btn btn-primary btn-round"><i class="fas fa-plus me-2"></i>New Transaction</a>
+          <h4 class="card-title mb-0">
+            <div class="btn-group" role="group">
+              <a href="index.php" class="btn btn-outline-primary active">
+                <i class="fas fa-shopping-cart"></i> Sales
+              </a>
+              <a href="activity_log.php" class="btn btn-outline-secondary">
+                <i class="fas fa-book"></i> Activity Logs
+              </a>
+            </div>
+          </h4>
+          <a href="create.php" class="btn btn-primary btn-round">
+            <i class="fas fa-plus me-2"></i>New Transaction
+          </a>
         </div>
       </div>
       <div class="card-body">
         <div class="table-responsive">
-          <table id="salesTable" class="table table-hover table-striped" style="width:100%">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>ID</th>
-                <th>Date</th>
-                <th>Name</th>
-                <th>items</th>
-                <th>Total</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>1</td>
-                <td>TRX-123456</td>
-                <td>Jan 12, 2023</td>
-                <td>John Doe</td>
-                <td>4</td>
-                <td>&#8369; 1,200.00</td>
-                <td>
-                  <div class="d-flex gap-2">
-                    <a href="view.php?id=TRX-123456" class="btn btn-warning btn-sm" title="View Details"><i class="fas fa-eye"></i></a>
-                    <button class="btn btn-danger btn-sm btn-void" data-id="TRX-123456" data-name="John Doe&apos;s transaction"><i class="fas fa-times"></i></button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>2</td>
-                <td>TRX-789012</td>
-                <td>Jan 11, 2023</td>
-                <td>Jane Doe</td>
-                <td>2</td>
-                <td>&#8369; 1,500.00</td>
-                <td>
-                  <div class="d-flex gap-2">
-                    <a href="view.php?id=TRX-123456" class="btn btn-warning btn-sm" title="View Details"><i class="fas fa-eye"></i></a>
-                    <button class="btn btn-danger btn-sm btn-void" data-id="TRX-123456" title="Void Transaction" data-name="John Doe&apos;s transaction"><i class="fas fa-times"></i></button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+            <table id="salesTable" class="table table-hover table-striped" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Date</th>
+                        <th>Customer Name</th>
+                        <th>Items</th>
+                        <th>Total Amount</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+            <script>
+                $(document).ready(function() {
+                    $('#salesTable').DataTable({
+                        "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
+                        "processing": true,
+                        "serverSide": true,
+                        "ajax": {
+                            "url": "../includes/sales/transaction_history.php",
+                            "type": "POST",
+                            "data": function (d) {
+                                // Add any additional parameters if needed
+                                return d;
+                            },
+                            "error": function(xhr, error, thrown) {
+                                console.error('DataTables AJAX Error:', error, thrown);
+                                console.error('Response:', xhr.responseText);
+                            }
+                        },
+                        "columns": [
+                            { "data": "id" },
+                            { 
+                                "data": "created_at",
+                                "render": function(data) {
+                                    const date = new Date(data);
+                                    return date.toLocaleDateString('en-US', {
+                                        month: 'short',
+                                        day: '2-digit',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: true
+                                    });
+                                }
+                            },
+                            { "data": "customer_name" },
+                            { "data": "item_count" },
+                            { 
+                                "data": "total_amount",
+                                "render": function(data) {
+                                    // Convert to number and format with 2 decimal places
+                                    const amount = parseFloat(data);
+                                    return '₱' + (isNaN(amount) ? '0.00' : amount.toFixed(2));
+                                }
+                            },
+                            { 
+                                "data": "id",
+                                "render": function(data) {
+                                    return '<a href="view.php?id=' + data + '" class="btn btn-sm btn-primary"><i class="fas fa-eye"></i></a>';
+                                }
+                            }
+                        ],
+                        "pageLength": 5,
+                        "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
+                        "language": {
+                            "search": "Search:",
+                            "lengthMenu": "Show _MENU_ entries",
+                            "info": "Showing page _PAGE_ of _PAGES_",
+                            "infoEmpty": "No entries found",
+                            "infoFiltered": "(filtered from _MAX_ total entries)"
+                        },
+                        "order": [[0, "desc"]], // Order by ID descending
+                        "initComplete": function() {
+                            console.log('DataTables initialized successfully');
+                        }
+                    });
+                });
+            </script>
         </div>
       </div>
     </div>
 
   </div>
 </div>
-
 <?php include __DIR__ . "/../templates/footer.php"; ?>
 </div>
 </div>
 <!--   Core JS Files   -->
 <?php include __DIR__ . "/../templates/scripts.php"; ?>
-
-<!-- Void Confirmation Modal -->
-<div class="modal fade" id="voidModal" tabindex="-1" role="dialog" aria-labelledby="voidModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="voidModalLabel">Confirm Void Transaction</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <p>Are you sure you want to void this transaction?</p>
-        <p><strong>Transaction ID:</strong> <span id="voidTransactionId"></span></p>
-        <p><strong>Customer:</strong> <span id="voidCustomerName"></span></p>
-        <p class="text-danger"><i class="fas fa-exclamation-triangle me-2"></i>This action cannot be undone.</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-danger" id="confirmVoid">Yes, Void Transaction</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- DataTables Script -->
-<script>
-// Handle void button click
-$(document).on('click', '.btn-void', function() {
-    const transactionId = $(this).data('id');
-    const customerName = $(this).data('name');
-    
-    $('#voidTransactionId').text(transactionId);
-    $('#voidCustomerName').text(customerName);
-    $('#voidModal').modal('show');
-});
-
-// Handle confirm void
-$('#confirmVoid').click(function() {
-    const transactionId = $('#voidTransactionId').text();
-    
-    // Show loading state
-    const $btn = $(this);
-    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Voiding...');
-    
-    // In a real application, you would make an AJAX call here to void the transaction
-    // For now, we'll just simulate a successful response
-    setTimeout(function() {
-        // Simulate API call
-        console.log('Voiding transaction:', transactionId);
-        
-        // Show success message
-        $('#voidModal').modal('hide');
-        
-        // Show success alert
-        const alertHtml = `
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                Transaction ${transactionId} has been voided successfully.
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>`;
-        
-        // Insert alert at the top of the card body
-        $('.card-body').prepend(alertHtml);
-        
-        // Remove the row from the table
-        $(`button[data-id="${transactionId}"]`).closest('tr').fadeOut(400, function() {
-            $(this).remove();
-            // If you're using DataTables, you might need to redraw the table
-            if ($.fn.DataTable.isDataTable('#salesTable')) {
-                $('#salesTable').DataTable().draw(false);
-            }
-        });
-        
-        // Reset button state
-        $btn.prop('disabled', false).text('Yes, Void Transaction');
-    }, 1000);
-});
-
-$(document).ready(function() {
-    $('#salesTable').DataTable({
-        responsive: true,
-        order: [[1, 'desc']], // Sort by date column (index 1) in descending order
-        columnDefs: [
-            { orderable: false, targets: [4] } // Disable sorting on Action column
-        ],
-        language: {
-            search: "Search transactions:",
-            searchPlaceholder: "Search by ID, customer...",
-            lengthMenu: "Show _MENU_ entries",
-            info: "Showing _START_ to _END_ of _TOTAL_ entries",
-            infoEmpty: "No entries found",
-            infoFiltered: "(filtered from _MAX_ total entries)",
-            paginate: {
-                first: "First",
-                last: "Last",
-                next: "Next",
-                previous: "Previous"
-            }
-        },
-        dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
-             "<'row'<'col-sm-12'tr>>" +
-             "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
-    });
-});
-</script>
 </body>
 </html>
-
-
