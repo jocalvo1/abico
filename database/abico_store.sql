@@ -269,10 +269,61 @@ ALTER TABLE `products`
   ADD KEY `idx_product_type` (`unit_type`);
 
 --
+-- Table structure for table `sales_activity_log`
+--
+
+CREATE TABLE `sales_activity_log` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `customer_id` int(11) DEFAULT NULL,
+  `action` varchar(50) NOT NULL COMMENT 'e.g., create_customer, update_debt, etc.',
+  `details` text DEFAULT NULL,
+  `old_value` decimal(10,2) DEFAULT NULL,
+  `new_value` decimal(10,2) DEFAULT NULL,
+  `update_type` varchar(20) DEFAULT NULL COMMENT 'partial, full, adjust',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `sales_activity_log`
+--
+
+INSERT INTO `sales_activity_log` (`id`, `user_id`, `customer_id`, `action`, `details`, `old_value`, `new_value`, `update_type`, `created_at`) VALUES
+(1, 3, 4, 'update_debt', 'Updated customer debt', 500.00, 0.00, 'full', '2025-07-10 14:15:51'),
+(2, 3, 2, 'update_debt', 'Updated customer debt', 800.00, 600.00, 'adjust', '2025-07-10 14:16:45'),
+(3, 3, 2, 'update_debt', 'Updated customer debt', 600.00, 400.00, 'partial', '2025-07-10 14:17:27'),
+(4, 3, 1, 'update_debt', 'Updated customer debt', 15.00, 0.00, 'partial', '2025-07-10 14:22:27'),
+(5, 3, 2, 'update_debt', 'Updated customer debt', 400.00, 350.00, 'partial', '2025-07-10 14:22:34'),
+(6, 3, 4, 'update_debt', 'Updated customer debt', 0.00, 10.00, 'adjust', '2025-07-10 14:28:22'),
+(7, 3, 4, 'update_debt', 'Updated customer debt', 10.00, 0.00, 'full', '2025-07-10 14:28:26'),
+(8, 3, 4, 'update_debt', 'Updated customer debt', 0.00, 20.00, 'adjust', '2025-07-10 14:28:34'),
+(9, 3, 4, 'update_debt', 'Updated customer debt', 20.00, 19.00, 'partial', '2025-07-10 14:28:39'),
+(10, 3, 4, 'update_debt', 'Updated customer debt', 19.00, 2000.00, 'adjust', '2025-07-10 14:28:57'),
+(11, 3, 4, 'update_debt', 'Updated customer debt', 2000.00, 500.00, 'partial', '2025-07-10 14:29:19'),
+(12, 3, 4, 'update_debt', 'Updated customer debt', 500.00, 50000.00, 'adjust', '2025-07-10 14:29:28'),
+(13, 3, 4, 'update_debt', 'Updated customer debt', 50000.00, 0.00, 'full', '2025-07-10 15:26:41'),
+(14, 3, 4, 'update_debt', 'Updated customer debt', 0.00, 30.00, 'adjust', '2025-07-10 15:26:51'),
+(15, 3, 4, 'update_debt', 'Updated customer debt', 30.00, 25.00, 'partial', '2025-07-10 15:26:57'),
+(16, 3, 5, 'create_customer', 'Added new customer: rodel', NULL, NULL, NULL, '2025-07-10 15:27:11'),
+(17, 3, 3, 'update_debt', 'Updated customer debt', 80.00, 75.00, 'partial', '2025-07-11 02:18:42'),
+(18, 3, 4, 'update_debt', 'Updated customer debt', 25.00, 100.00, 'adjust', '2025-07-11 02:18:52'),
+(19, 3, 3, 'update_debt', 'Updated customer debt', 75.00, 0.00, 'full', '2025-07-11 02:19:00'),
+(20, 3, 6, 'create_customer', 'Added new customer: Jasper', NULL, NULL, NULL, '2025-07-11 08:31:55'),
+(21, 3, 6, 'update_debt', 'Updated customer debt', 0.00, 20.00, 'adjust', '2025-07-11 08:32:20'),
+(22, 3, 6, 'update_debt', 'Updated customer debt', 20.00, 15.00, 'partial', '2025-07-11 08:32:31'),
+(23, 3, 6, 'update_debt', 'Updated customer debt', 15.00, 0.00, 'full', '2025-07-11 08:32:36'),
+(24, 3, 6, 'update_debt', 'Updated customer debt', 0.00, 500.00, 'adjust', '2025-07-13 06:23:28'),
+(25, 3, 6, 'update_debt', 'Updated customer debt', 500.00, 400.00, 'partial', '2025-07-14 15:37:35'),
+(26, 3, 6, 'update_debt', 'Updated customer debt', 400.00, 0.00, 'full', '2025-07-14 15:37:49'),
+(27, 3, 4, 'update_debt', 'Updated customer debt', 100.00, 0.00, 'full', '2025-07-14 15:47:29');
+
+--
 -- Indexes for table `sales_activity_log`
 --
 ALTER TABLE `sales_activity_log`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_customer` (`customer_id`),
+  ADD KEY `idx_created` (`created_at`);
 
 --
 -- Indexes for table `sale_items`
@@ -321,7 +372,7 @@ ALTER TABLE `products`
 -- AUTO_INCREMENT for table `sales_activity_log`
 --
 ALTER TABLE `sales_activity_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `sale_items`
