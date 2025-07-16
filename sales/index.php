@@ -63,7 +63,11 @@ include __DIR__ . "/../templates/nav.php";
             </table>
             <script>
                 $(document).ready(function() {
-                    $('#salesTable').DataTable({
+                    // Initialize tooltips
+                    $('[data-bs-toggle="tooltip"]').tooltip();
+                    
+                    // Initialize DataTable
+                    var table = $('#salesTable').DataTable({
                         "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
                         "processing": true,
                         "serverSide": true,
@@ -80,9 +84,13 @@ include __DIR__ . "/../templates/nav.php";
                             }
                         },
                         "columns": [
-                            { "data": "id" },
+                            { 
+                                "data": "id",
+                                "orderable": true
+                            },
                             { 
                                 "data": "created_at",
+                                "orderable": true,
                                 "render": function(data) {
                                     const date = new Date(data);
                                     return date.toLocaleDateString('en-US', {
@@ -95,20 +103,33 @@ include __DIR__ . "/../templates/nav.php";
                                     });
                                 }
                             },
-                            { "data": "customer_name" },
-                            { "data": "item_count" },
+                            { 
+                                "data": "customer_name",
+                                "orderable": true
+                            },
+                            { 
+                                "data": "item_count",
+                                "orderable": true
+                            },
                             { 
                                 "data": "total_amount",
+                                "orderable": true,
                                 "render": function(data) {
-                                    // Convert to number and format with 2 decimal places
                                     const amount = parseFloat(data);
                                     return '₱' + (isNaN(amount) ? '0.00' : amount.toFixed(2));
                                 }
                             },
                             { 
                                 "data": "id",
+                                "orderable": false,
+                                "className": "text-center",
                                 "render": function(data) {
-                                    return '<a href="view.php?id=' + data + '" class="btn btn-sm btn-primary"><i class="fas fa-eye"></i></a>';
+                                    return '<a href="view.php?id=' + data + '" ' +
+                                           'class="btn btn-sm btn-outline-primary px-3 py-1" ' +
+                                           'title="View transaction details" ' +
+                                           'data-bs-toggle="tooltip" ' +
+                                           'data-bs-placement="top">' +
+                                           '<i class="fas fa-eye me-1"></i>View</a>';
                                 }
                             }
                         ],
@@ -124,6 +145,8 @@ include __DIR__ . "/../templates/nav.php";
                         "order": [[0, "desc"]], // Order by ID descending
                         "initComplete": function() {
                             console.log('DataTables initialized successfully');
+                            // Re-initialize tooltips after table is loaded
+                            $('[data-bs-toggle="tooltip"]').tooltip();
                         }
                     });
                 });

@@ -98,8 +98,8 @@ include __DIR__ . "/../templates/nav.php";
                                 <td data-order="<?php echo $row['price_per_unit'] ?? $row['price']; ?>">₱<?php echo number_format(($row['price_per_unit'] ?? $row['price']), 2); ?></td>
                                 <td class="d-none"><?php echo $row['created_at']; ?></td>
                                 <td>
-                                    <div class="d-flex">
-                                        <button class="btn btn-primary btn-sm me-2 edit-product"
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-outline-primary btn-sm edit-product"
                                                 data-id="<?php echo $row['id']; ?>"
                                                 data-name="<?php echo htmlspecialchars($row['product_name']); ?>"
                                                 data-quantity="<?php echo $row['stock_quantity'] ?? $row['quantity']; ?>"
@@ -107,13 +107,23 @@ include __DIR__ . "/../templates/nav.php";
                                                 data-unit-value="<?php echo $row['unit_value'] ?? '1'; ?>"
                                                 data-other-unit-type="<?php echo htmlspecialchars($row['other_unit_type'] ?? ''); ?>"
                                                 data-pieces-per-pack="<?php echo $row['pieces_per_pack'] ?? ''; ?>"
-                                                data-price="<?php echo $row['price_per_unit'] ?? $row['price']; ?>">
+                                                data-price="<?php echo $row['price_per_unit'] ?? $row['price']; ?>"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="top"
+                                                title="Edit product"
+                                                aria-label="Edit product">
                                             <i class="fas fa-edit"></i>
+                                            <span class="d-none d-sm-inline ms-1">Edit</span>
                                         </button>
-                                        <button class="btn btn-danger btn-sm delete-product" 
+                                        <button class="btn btn-outline-danger btn-sm delete-product" 
                                                 data-id="<?php echo $row['id']; ?>"
-                                                data-name="<?php echo htmlspecialchars($row['product_name']); ?>">
+                                                data-name="<?php echo htmlspecialchars($row['product_name']); ?>"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="top"
+                                                title="Delete product"
+                                                aria-label="Delete product">
                                             <i class="fas fa-trash"></i>
+                                            <span class="d-none d-sm-inline ms-1">Delete</span>
                                         </button>
                                     </div>
                                 </td>
@@ -297,9 +307,13 @@ include __DIR__ . "/../templates/nav.php";
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Update Product</button>
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> Close
+                    </button>
+                    <button type="submit" class="btn btn-sm btn-primary px-3" id="updateProductBtn">
+                        <i class="fas fa-save me-1"></i> Update Product
+                    </button>
                 </div>
             </form>
         </div>
@@ -319,6 +333,12 @@ include __DIR__ . "/../templates/nav.php";
 
 <script>
 $(document).ready(function() {
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
     // Update unit display based on selected unit type
     function updateUnitDisplay() {
         const unitType = $('#unitType').val();
@@ -621,10 +641,17 @@ $(document).ready(function() {
     $('#editProductForm').on('submit', function(e) {
         e.preventDefault();
         
+        const $form = $(this);
+        const $submitBtn = $form.find('button[type="submit"]');
+        const originalBtnText = $submitBtn.html();
+        
+        // Show loading state
+        $submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Updating...');
+        
         $.ajax({
-            url: $(this).attr('action'),
+            url: $form.attr('action'),
             type: 'POST',
-            data: $(this).serialize(),
+            data: $form.serialize(),
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
@@ -633,7 +660,8 @@ $(document).ready(function() {
                         title: 'Success!',
                         text: response.message || 'Product updated successfully',
                         timer: 1500,
-                        showConfirmButton: false
+                        showConfirmButton: false,
+                        allowOutsideClick: false
                     }).then(() => {
                         window.location.reload();
                     });
@@ -642,70 +670,111 @@ $(document).ready(function() {
                         icon: 'error',
                         title: 'Error!',
                         text: response.message || 'Failed to update product',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#3085d6',
                     });
                 }
             },
-            error: function() {
+            error: function(xhr) {
+                let errorMessage = 'An error occurred while updating the product';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
                 Swal.fire({
                     icon: 'error',
                     title: 'Error!',
-                    text: 'An error occurred while updating the product',
+                    text: errorMessage,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3085d6',
                 });
+            },
+            complete: function() {
+                $submitBtn.prop('disabled', false).html(originalBtnText);
             }
         });
     });
     
     // Delete product functionality
-    $('.delete-product').on('click', function(e) {
+    $(document).on('click', '.delete-product', function(e) {
         e.preventDefault();
         
-        const productId = $(this).data('id');
-        const productName = $(this).data('name');
+        const $deleteBtn = $(this);
+        const productId = $deleteBtn.data('id');
+        const productName = $deleteBtn.data('name');
         
         Swal.fire({
             title: 'Delete Product',
-            text: `Are you sure you want to delete "${productName}"? This action cannot be undone.`,
+            html: `
+                <div class="text-center">
+                    <i class="fas fa-exclamation-triangle text-warning mb-3" style="font-size: 4rem;"></i>
+                    <h4>Are you sure?</h4>
+                    <p>You are about to delete: <strong>${productName}</strong></p>
+                    <p class="text-danger">This action cannot be undone!</p>
+                </div>
+            `,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Yes, delete it!',
-            cancelButtonText: 'Cancel',
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Send delete request
-                $.ajax({
+            confirmButtonText: '<i class="fas fa-trash me-1"></i> Yes, delete it!',
+            cancelButtonText: '<i class="fas fa-times me-1"></i> Cancel',
+            reverseButtons: true,
+            focusCancel: true,
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return $.ajax({
                     url: '/abico/includes/inventory/delete_product.php',
                     type: 'POST',
                     data: { id: productId },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-                            Swal.fire(
-                                'Deleted!',
-                                response.message || 'The product has been deleted.',
-                                'success'
-                            ).then(() => {
-                                // Reload the page to reflect changes
-                                window.location.reload();
-                            });
-                        } else {
-                            Swal.fire(
-                                'Error!',
-                                response.message || 'Failed to delete product.',
-                                'error'
-                            );
-                        }
-                    },
-                    error: function() {
-                        Swal.fire(
-                            'Error!',
-                            'An error occurred while deleting the product.',
-                            'error'
-                        );
-                    }
+                    dataType: 'json'
                 });
+            },
+            allowOutsideClick: () => !Swal.isLoading()
+        }).then((result) => {
+            if (result.isConfirmed) {
+                if (result.value && result.value.success) {
+                    const response = result.value;
+                    // Show success message
+                    Swal.fire({
+                        title: 'Deleted!',
+                        html: `
+                            <div class="text-center">
+                                <i class="fas fa-check-circle text-success mb-3" style="font-size: 4rem;"></i>
+                                <h4>Success!</h4>
+                                <p>${response.message || 'The product has been deleted.'}</p>
+                            </div>
+                        `,
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        // Reload the page to reflect changes
+                        window.location.reload();
+                    });
+                } else {
+                    let errorMessage = 'An error occurred while deleting the product.';
+                    if (result.value && result.value.message) {
+                        errorMessage = result.value.message;
+                    }
+                    Swal.fire({
+                        title: 'Error!',
+                        text: errorMessage,
+                        icon: 'error',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#3085d6',
+                    });
+                }
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                Swal.fire({
+                    title: 'Cancelled',
+                    text: 'Your product is safe!',
+                    icon: 'info',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3085d6',
+                    timer: 1500
+                });
+            } else if (result.isDismissed) {
+                // Handle other dismissals if needed
+                console.log('Delete action was dismissed');
             }
         });
     });
@@ -713,7 +782,6 @@ $(document).ready(function() {
 </script>
 
 </body>
-</html>
 <?php
 // Display SweetAlert if there's a message in the session
 if (isset($_SESSION['alert'])) {
