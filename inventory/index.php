@@ -99,17 +99,17 @@ include __DIR__ . "/../templates/nav.php";
                                 <td class="d-none"><?php echo $row['created_at']; ?></td>
                                 <td>
                                     <div class="d-flex">
-                                    <button class="btn btn-primary btn-sm me-2 edit-product"
-                                            data-id="<?php echo $row['id']; ?>"
-                                            data-name="<?php echo htmlspecialchars($row['product_name']); ?>"
-                                            data-quantity="<?php echo $row['stock_quantity'] ?? $row['quantity']; ?>"
-                                            data-unit-type="<?php echo htmlspecialchars($row['unit_type'] ?? ''); ?>"
-                                            data-unit-value="<?php echo $row['unit_value'] ?? '1'; ?>"
-                                            data-other-unit-type="<?php echo htmlspecialchars($row['other_unit_type'] ?? ''); ?>"
-                                            data-pieces-per-pack="<?php echo $row['pieces_per_pack'] ?? ''; ?>"
-                                            data-price="<?php echo $row['price_per_unit'] ?? $row['price']; ?>">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
+                                        <button class="btn btn-primary btn-sm me-2 edit-product"
+                                                data-id="<?php echo $row['id']; ?>"
+                                                data-name="<?php echo htmlspecialchars($row['product_name']); ?>"
+                                                data-quantity="<?php echo $row['stock_quantity'] ?? $row['quantity']; ?>"
+                                                data-unit-type="<?php echo htmlspecialchars($row['unit_type'] ?? ''); ?>"
+                                                data-unit-value="<?php echo $row['unit_value'] ?? '1'; ?>"
+                                                data-other-unit-type="<?php echo htmlspecialchars($row['other_unit_type'] ?? ''); ?>"
+                                                data-pieces-per-pack="<?php echo $row['pieces_per_pack'] ?? ''; ?>"
+                                                data-price="<?php echo $row['price_per_unit'] ?? $row['price']; ?>">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
                                         <button class="btn btn-danger btn-sm delete-product" 
                                                 data-id="<?php echo $row['id']; ?>"
                                                 data-name="<?php echo htmlspecialchars($row['product_name']); ?>">
@@ -315,8 +315,7 @@ include __DIR__ . "/../templates/nav.php";
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <!-- DataTables JS -->
 <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js">
-</script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
 $(document).ready(function() {
