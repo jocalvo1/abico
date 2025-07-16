@@ -471,7 +471,16 @@ include __DIR__ . "/../templates/nav.php";
                 {
                     targets: 2, // Date column
                     className: 'text-nowrap',
-                    width: '180px'
+                    width: '180px',
+                    type: 'date',
+                    render: function(data, type, row) {
+                        if (type === 'sort' || type === 'type') {
+                            // Convert the date to a sortable format (YYYYMMDD)
+                            var parts = data.split(' ')[0].split('-');
+                            return parts[2] + parts[1] + parts[0];
+                        }
+                        return data;
+                    }
                 },
                 { 
                     targets: -1, // Actions column
