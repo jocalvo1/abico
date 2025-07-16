@@ -3,15 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
-<<<<<<< HEAD
--- Generation Time: Jul 12, 2025 at 10:15 AM
--- Server version: 10.4.28-MariaDB
--- PHP Version: 8.2.4
-=======
--- Generation Time: Jul 12, 2025 at 08:03 PM
+-- Generation Time: Jul 16, 2025 at 07:30 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
->>>>>>> f675cbd9407bad57bf9e632e3b5a7b82eac05c8f
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -26,57 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `abico_store`
 --
-
--- --------------------------------------------------------
-
---
--- Table structure for table `activity_logs`
---
-
-CREATE TABLE `activity_logs` (
-  `id` int(11) NOT NULL,
-  `user_id` int(11) DEFAULT NULL,
-  `customer_id` int(11) DEFAULT NULL,
-  `action` varchar(50) NOT NULL COMMENT 'e.g., create_customer, update_debt, etc.',
-  `details` text DEFAULT NULL,
-  `old_value` decimal(10,2) DEFAULT NULL,
-  `new_value` decimal(10,2) DEFAULT NULL,
-  `update_type` varchar(20) DEFAULT NULL COMMENT 'partial, full, adjust',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `activity_logs`
---
-
-INSERT INTO `activity_logs` (`id`, `user_id`, `customer_id`, `action`, `details`, `old_value`, `new_value`, `update_type`, `created_at`) VALUES
-(1, 3, 4, 'update_debt', 'Updated customer debt', 500.00, 0.00, 'full', '2025-07-10 14:15:51'),
-(2, 3, 2, 'update_debt', 'Updated customer debt', 800.00, 600.00, 'adjust', '2025-07-10 14:16:45'),
-(3, 3, 2, 'update_debt', 'Updated customer debt', 600.00, 400.00, 'partial', '2025-07-10 14:17:27'),
-(4, 3, 1, 'update_debt', 'Updated customer debt', 15.00, 0.00, 'partial', '2025-07-10 14:22:27'),
-(5, 3, 2, 'update_debt', 'Updated customer debt', 400.00, 350.00, 'partial', '2025-07-10 14:22:34'),
-(6, 3, 4, 'update_debt', 'Updated customer debt', 0.00, 10.00, 'adjust', '2025-07-10 14:28:22'),
-(7, 3, 4, 'update_debt', 'Updated customer debt', 10.00, 0.00, 'full', '2025-07-10 14:28:26'),
-(8, 3, 4, 'update_debt', 'Updated customer debt', 0.00, 20.00, 'adjust', '2025-07-10 14:28:34'),
-(9, 3, 4, 'update_debt', 'Updated customer debt', 20.00, 19.00, 'partial', '2025-07-10 14:28:39'),
-(10, 3, 4, 'update_debt', 'Updated customer debt', 19.00, 2000.00, 'adjust', '2025-07-10 14:28:57'),
-(11, 3, 4, 'update_debt', 'Updated customer debt', 2000.00, 500.00, 'partial', '2025-07-10 14:29:19'),
-(12, 3, 4, 'update_debt', 'Updated customer debt', 500.00, 50000.00, 'adjust', '2025-07-10 14:29:28'),
-(13, 3, 4, 'update_debt', 'Updated customer debt', 50000.00, 0.00, 'full', '2025-07-10 15:26:41'),
-(14, 3, 4, 'update_debt', 'Updated customer debt', 0.00, 30.00, 'adjust', '2025-07-10 15:26:51'),
-(15, 3, 4, 'update_debt', 'Updated customer debt', 30.00, 25.00, 'partial', '2025-07-10 15:26:57'),
-(16, 3, 5, 'create_customer', 'Added new customer: rodel', NULL, NULL, NULL, '2025-07-10 15:27:11'),
-(17, 3, 3, 'update_debt', 'Updated customer debt', 80.00, 75.00, 'partial', '2025-07-11 02:18:42'),
-(18, 3, 4, 'update_debt', 'Updated customer debt', 25.00, 100.00, 'adjust', '2025-07-11 02:18:52'),
-(19, 3, 3, 'update_debt', 'Updated customer debt', 75.00, 0.00, 'full', '2025-07-11 02:19:00'),
-(20, 3, 6, 'create_customer', 'Added new customer: Jasper', NULL, NULL, NULL, '2025-07-11 08:31:55'),
-(21, 3, 6, 'update_debt', 'Updated customer debt', 0.00, 20.00, 'adjust', '2025-07-11 08:32:20'),
-(22, 3, 6, 'update_debt', 'Updated customer debt', 20.00, 15.00, 'partial', '2025-07-11 08:32:31'),
-(23, 3, 6, 'update_debt', 'Updated customer debt', 15.00, 0.00, 'full', '2025-07-11 08:32:36'),
-(24, 3, 4, 'update_debt', 'Updated customer debt', 100.00, 500.00, 'adjust', '2025-07-12 04:59:02'),
-(25, 3, 4, 'update_debt', 'Updated customer debt', 500.00, 0.00, 'partial', '2025-07-12 04:59:16'),
-(26, 3, 7, 'create_customer', 'Added new customer: Jack N Poy', NULL, NULL, NULL, '2025-07-12 05:22:58'),
-(27, 3, 8, 'create_customer', 'Added new customer: Jo', NULL, NULL, NULL, '2025-07-12 16:07:38');
 
 -- --------------------------------------------------------
 
@@ -98,14 +41,9 @@ CREATE TABLE `customers` (
 --
 
 INSERT INTO `customers` (`id`, `customer_name`, `contact`, `debt`, `created_at`, `updated_at`) VALUES
-(1, 'Zhedrick Villavecencio', '09065187005', '0', '2025-07-10 12:34:29', '2025-07-10 14:22:27'),
-(2, 'Zhedrick Villavecencio', '09065187005', '350', '2025-07-10 12:34:43', '2025-07-10 14:22:34'),
-(3, 'Zhean B. Villavecencio', '09065187005', '0', '2025-07-10 12:37:07', '2025-07-11 02:19:00'),
-(4, 'joseph calvo', '09065187005', '0', '2025-07-10 13:11:02', '2025-07-12 04:59:16'),
-(5, 'rodel', '09065187005', '0', '2025-07-10 15:27:11', '2025-07-10 15:27:11'),
-(6, 'Jasper', '09065187005', '0', '2025-07-11 08:31:55', '2025-07-11 08:32:36'),
-(7, 'Jack N Poy', '09611302308', '0', '2025-07-12 05:22:58', '2025-07-12 05:22:58'),
-(8, 'Jo', '09611302308', '0', '2025-07-12 16:07:38', '2025-07-12 16:07:38');
+(1, 'Joseph Emmanuel N. Calvo', '09611302308 / 09157361882', '0', '2025-07-15 05:58:39', '2025-07-15 05:58:39'),
+(2, 'Zhedrick J. Villavecencio', '09123456789', '0', '2025-07-15 06:09:07', '2025-07-15 06:09:07'),
+(3, 'Rodel A. Tayo', '09192626010', '0', '2025-07-16 03:29:22', '2025-07-16 03:29:22');
 
 -- --------------------------------------------------------
 
@@ -130,14 +68,38 @@ CREATE TABLE `inventory_activity_log` (
 --
 
 INSERT INTO `inventory_activity_log` (`id`, `user_id`, `action`, `description`, `product_id`, `product_name`, `old_values`, `new_values`, `created_at`) VALUES
-(25, 3, 'add', 'Added new product', 36, 'Fresh Whole Milk', NULL, '{\n    \"product_name\": \"Fresh Whole Milk\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"85\",\n    \"stock_quantity\": 120,\n    \"unit_type\": \"L\",\n    \"unit_value\": \"1\",\n    \"other_unit_type\": null,\n    \"pieces_per_pack\": null\n}', '2025-07-12 13:08:39'),
-(26, 3, 'add', 'Added new product', 37, 'FreshScent Bath Soap', NULL, '{\n    \"product_name\": \"FreshScent Bath Soap\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"99\",\n    \"stock_quantity\": 77,\n    \"unit_type\": \"pack\",\n    \"unit_value\": \"1\",\n    \"other_unit_type\": null,\n    \"pieces_per_pack\": 5\n}', '2025-07-12 13:10:34'),
-(27, 3, 'add', 'Added new product', 38, 'UltraBright LED Flashlight', NULL, '{\n    \"product_name\": \"UltraBright LED Flashlight\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"49\",\n    \"stock_quantity\": 50,\n    \"unit_type\": \"box\",\n    \"unit_value\": \"1\",\n    \"other_unit_type\": \"box\",\n    \"pieces_per_pack\": null\n}', '2025-07-12 13:11:10'),
-(28, 3, 'add', 'Added new product', 39, 'UltraBright LED Flashlight', NULL, '{\n    \"product_name\": \"UltraBright LED Flashlight\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"49\",\n    \"stock_quantity\": 50,\n    \"unit_type\": \"g\",\n    \"unit_value\": \"20\",\n    \"other_unit_type\": null,\n    \"pieces_per_pack\": null\n}', '2025-07-12 15:57:10'),
-(29, 3, 'add', 'Added new product', 40, 'UltraBright LED Flashlight', NULL, '{\n    \"product_name\": \"UltraBright LED Flashlight\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"49\",\n    \"stock_quantity\": 50,\n    \"unit_type\": \"g\",\n    \"unit_value\": \"50\",\n    \"other_unit_type\": null,\n    \"pieces_per_pack\": null\n}', '2025-07-12 15:57:29'),
-(30, 3, 'add', 'Added new product', 41, 'UltraBright LED Flashlight', NULL, '{\n    \"product_name\": \"UltraBright LED Flashlight\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"49\",\n    \"stock_quantity\": 50,\n    \"unit_type\": \"g\",\n    \"unit_value\": \"50\",\n    \"other_unit_type\": null,\n    \"pieces_per_pack\": null\n}', '2025-07-12 15:57:45'),
-(31, 3, 'add', 'Added new product', 42, 'Coke', NULL, '{\n    \"product_name\": \"Coke\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"20\",\n    \"stock_quantity\": 10,\n    \"unit_type\": \"pack\",\n    \"unit_value\": \"1\",\n    \"other_unit_type\": null,\n    \"pieces_per_pack\": 12\n}', '2025-07-12 15:58:25'),
-(32, 3, 'update', 'Updated product details', 42, 'Coke', '{\n    \"pieces_per_pack\": 12\n}', '{\n    \"pieces_per_pack\": 16\n}', '2025-07-12 15:59:54');
+(1, 5, 'add', 'Added new product', NULL, 'Mang Juan', NULL, '{\n    \"product_name\": \"Mang Juan\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"14\",\n    \"stock_quantity\": 50,\n    \"unit_type\": \"pc\",\n    \"unit_value\": \"1\",\n    \"other_unit_type\": null,\n    \"pieces_per_pack\": null\n}', '2025-07-14 22:57:00'),
+(2, 5, 'add', 'Added new product', NULL, 'Jasmine Rice (1 Sack)', NULL, '{\n    \"product_name\": \"Jasmine Rice (1 Sack)\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"2550\",\n    \"stock_quantity\": 30,\n    \"unit_type\": \"kg\",\n    \"unit_value\": \"50\",\n    \"other_unit_type\": null,\n    \"pieces_per_pack\": null\n}', '2025-07-14 23:02:25'),
+(3, 5, 'add', 'Added new product', NULL, 'Zest-O Juice', NULL, '{\n    \"product_name\": \"Zest-O Juice\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"100\",\n    \"stock_quantity\": 100,\n    \"unit_type\": \"Carton\",\n    \"unit_value\": \"25\",\n    \"other_unit_type\": \"Carton\",\n    \"pieces_per_pack\": null\n}', '2025-07-14 23:03:15'),
+(4, 5, 'add', 'Added new product', NULL, 'Milo', NULL, '{\n    \"product_name\": \"Milo\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"120\",\n    \"stock_quantity\": 20,\n    \"unit_type\": \"pack\",\n    \"unit_value\": \"1\",\n    \"other_unit_type\": null,\n    \"pieces_per_pack\": 12\n}', '2025-07-14 23:04:26'),
+(5, 3, 'add', 'Added new product', 5, 'Kalamay nga pula', NULL, '{\n    \"product_name\": \"Kalamay nga pula\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"50\",\n    \"stock_quantity\": 40,\n    \"unit_type\": \"g\",\n    \"unit_value\": \"500\",\n    \"other_unit_type\": null,\n    \"pieces_per_pack\": null\n}', '2025-07-15 20:30:06'),
+(6, 3, 'update', 'Updated product details', 4, 'Milo', '{\n    \"stock_quantity\": 19\n}', '{\n    \"stock_quantity\": 20\n}', '2025-07-15 20:33:55'),
+(7, 3, 'add', 'Added new product', 6, 'Kalamay nga puti', NULL, '{\n    \"product_name\": \"Kalamay nga puti\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"50\",\n    \"stock_quantity\": 20,\n    \"unit_type\": \"g\",\n    \"unit_value\": \"500\",\n    \"other_unit_type\": null,\n    \"pieces_per_pack\": null\n}', '2025-07-15 20:34:23'),
+(8, 3, 'add', 'Added new product', 7, 'Kalamay Hati', NULL, '{\n    \"product_name\": \"Kalamay Hati\",\n    \"description\": \"\",\n    \"price\": null,\n    \"price_per_unit\": \"12\",\n    \"stock_quantity\": 50,\n    \"unit_type\": \"pc\",\n    \"unit_value\": \"1\",\n    \"other_unit_type\": null,\n    \"pieces_per_pack\": null\n}', '2025-07-15 20:37:45');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `payment_methods`
+--
+
+CREATE TABLE `payment_methods` (
+  `id` int(11) NOT NULL,
+  `name` varchar(50) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `payment_methods`
+--
+
+INSERT INTO `payment_methods` (`id`, `name`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'Cash', 'Cash payment', 1, '2025-07-13 02:14:25', '2025-07-13 02:14:25'),
+(2, 'Online', 'Online payment or bank transfer', 1, '2025-07-13 02:14:25', '2025-07-13 02:14:25'),
+(3, 'Cheque', 'Payment by check', 1, '2025-07-13 02:14:25', '2025-07-13 02:14:25');
 
 -- --------------------------------------------------------
 
@@ -162,73 +124,99 @@ CREATE TABLE `products` (
 -- Dumping data for table `products`
 --
 
-<<<<<<< HEAD
 INSERT INTO `products` (`id`, `product_name`, `unit_value`, `unit_type`, `other_unit_type`, `pieces_per_pack`, `stock_quantity`, `price_per_unit`, `created_at`, `updated_at`) VALUES
-(36, 'Fresh Whole Milk', 1, 'L', NULL, NULL, 120, 85.00, '2025-07-11 23:08:39', '2025-07-12 05:08:39'),
-(37, 'FreshScent Bath Soap', 1, 'pack', NULL, 5, 77, 99.00, '2025-07-11 23:10:34', '2025-07-12 05:10:34'),
-(38, 'UltraBright LED Flashlight', 1, 'box', 'box', NULL, 50, 49.00, '2025-07-11 23:11:10', '2025-07-12 05:11:10'),
-(39, 'UltraBright LED Flashlight', 20, 'g', NULL, NULL, 50, 49.00, '2025-07-12 01:57:10', '2025-07-12 07:57:10'),
-(40, 'UltraBright LED Flashlight', 50, 'g', NULL, NULL, 50, 49.00, '2025-07-12 01:57:28', '2025-07-12 07:57:28'),
-(41, 'UltraBright LED Flashlight', 50, 'g', NULL, NULL, 50, 49.00, '2025-07-12 01:57:45', '2025-07-12 07:57:45'),
-(42, 'Coke', 1, 'pack', NULL, 16, 10, 20.00, '2025-07-12 01:58:25', '2025-07-12 01:59:54');
-=======
-INSERT INTO `products` (`id`, `product_name`, `description`, `quantity`, `price`, `created_at`, `updated_at`) VALUES
-(7, 'Patata', 'fresh from farm', 2000, 20.02, '2025-07-08 10:13:23', '2025-07-09 00:00:17'),
-(11, 'Mang Juan ', '5 GRAM', 100, 15.00, '2025-07-09 04:56:53', '2025-07-10 07:10:32'),
-(13, 'Mang Juan ', 'okay', 100, 15.00, '2025-07-10 04:41:39', '2025-07-10 10:41:39'),
-(14, 'Mang Juan ', 'asda', 100, 20.00, '2025-07-10 04:46:01', '2025-07-10 08:31:47'),
-(15, 'Patata', 'asda', 12, 12.00, '2025-07-10 04:46:09', '2025-07-10 08:31:36'),
-(16, 'Chechs', 'asdf', 3, 0.02, '2025-07-10 04:46:21', '2025-07-10 08:58:18'),
-(19, 'Mang Juan', 'asd', 3, 12.00, '2025-07-10 04:46:52', '2025-07-10 10:46:52'),
-(25, 'BearBrand', 'asd', 20, 20.00, '2025-07-10 09:04:38', '2025-07-10 15:04:38'),
-(27, 'BearBrand', 'asdas', 20, 20.00, '2025-07-10 09:06:54', '2025-07-10 15:06:54'),
-(28, 'Milo', 'champion every day', 10, 10.00, '2025-07-10 09:08:54', '2025-07-10 15:08:54'),
-(29, 'Milo', 'champion every days', 10, 10.00, '2025-07-10 09:09:47', '2025-07-10 09:12:46'),
-(33, 'Patata', 'mn mn', 32, 502.00, '2025-07-10 09:26:26', '2025-07-10 15:26:26'),
-(34, 'Patata', 'asfas', 32, 502.00, '2025-07-10 09:28:27', '2025-07-10 15:28:27'),
-(35, 'Patata', 'sad', 32, 502.00, '2025-07-10 09:30:37', '2025-07-10 15:30:37'),
-(37, 'Patat0', 'asxas', 32, 502.05, '2025-07-10 09:32:41', '2025-07-10 15:32:41'),
-(39, 'CheezIt', 'Cheese, 60 grams', 100, 17.90, '2025-07-10 20:22:54', '2025-07-11 02:34:34'),
-(41, 'skibiditoiletrizzahh', '', 32, 52.00, '2025-07-12 13:47:08', '2025-07-12 04:47:08');
->>>>>>> f675cbd9407bad57bf9e632e3b5a7b82eac05c8f
+(1, 'Mang Juan', 1, 'pc', NULL, NULL, 46, 14.00, '2025-07-15 14:57:00', '2025-07-15 22:02:28'),
+(2, 'Jasmine Rice (1 Sack)', 50, 'kg', NULL, NULL, 27, 2550.00, '2025-07-15 15:02:25', '2025-07-15 22:02:28'),
+(3, 'Zest-O Juice', 25, 'Carton', 'Carton', NULL, 100, 100.00, '2025-07-15 15:03:15', '2025-07-15 06:03:15'),
+(4, 'Milo', 1, 'pack', NULL, 12, 20, 120.00, '2025-07-15 15:04:26', '2025-07-16 12:33:55'),
+(5, 'Kalamay nga pula', 500, 'g', NULL, NULL, 40, 50.00, '2025-07-16 12:30:06', '2025-07-16 03:30:06'),
+(6, 'Kalamay nga puti', 500, 'g', NULL, NULL, 20, 50.00, '2025-07-16 12:34:23', '2025-07-16 03:34:23'),
+(7, 'Kalamay Hati', 1, 'pc', NULL, NULL, 50, 12.00, '2025-07-16 12:37:45', '2025-07-16 03:37:45');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `sales`
+-- Table structure for table `sales_activity_log`
 --
 
-CREATE TABLE `sales` (
+CREATE TABLE `sales_activity_log` (
   `id` int(11) NOT NULL,
-  `customer_id` int(11) DEFAULT NULL,
-  `total_amount` decimal(10,2) NOT NULL,
-  `amount_paid` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `payment_status` enum('pending','partial','paid') NOT NULL DEFAULT 'pending',
-  `sale_date` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `transaction_id` int(11) NOT NULL,
+  `customer_name` varchar(255) NOT NULL,
+  `description` text NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `sales_activity_log`
+--
+
+INSERT INTO `sales_activity_log` (`id`, `transaction_id`, `customer_name`, `description`, `created_at`) VALUES
+(10, 16, 'Joseph Emmanuel N. Calvo', 'Customer Joseph Emmanuel N. Calvo bought 2 items for ₱2,578.00', '2025-07-15 20:31:04'),
+(11, 17, 'Walk-in Customer', 'Customer Walk-in Customer bought 2 items for ₱150.00', '2025-07-15 20:35:07'),
+(12, 18, 'Zhedrick J. Villavecencio', 'Customer Zhedrick J. Villavecencio bought 1 items for ₱5,100.00', '2025-07-15 20:35:26'),
+(13, 19, 'Zhedrick J. Villavecencio', 'Customer Zhedrick J. Villavecencio bought 1 items for ₱5,100.00', '2025-07-15 20:37:13');
+
 -- --------------------------------------------------------
 
 --
-<<<<<<< HEAD
 -- Table structure for table `sale_items`
 --
 
 CREATE TABLE `sale_items` (
   `id` int(11) NOT NULL,
-  `sale_id` int(11) NOT NULL,
-  `product_id` int(11) DEFAULT NULL,
+  `transaction_id` int(11) NOT NULL,
+  `product_id` int(11) NOT NULL,
+  `product_name` varchar(255) NOT NULL,
   `quantity` int(11) NOT NULL,
   `price` decimal(10,2) NOT NULL,
-  `subtotal` decimal(10,2) NOT NULL
+  `subtotal` decimal(10,2) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `sale_items`
+--
+
+INSERT INTO `sale_items` (`id`, `transaction_id`, `product_id`, `product_name`, `quantity`, `price`, `subtotal`, `created_at`) VALUES
+(28, 16, 2, 'Jasmine Rice (1 Sack)', 1, 2550.00, 2550.00, '2025-07-16 03:31:04'),
+(29, 16, 1, 'Mang Juan', 2, 14.00, 28.00, '2025-07-16 03:31:04'),
+(30, 17, 5, 'Kalamay nga pula', 1, 50.00, 50.00, '2025-07-16 03:35:07'),
+(31, 17, 6, 'Kalamay nga puti', 2, 50.00, 100.00, '2025-07-16 03:35:07'),
+(32, 18, 2, 'Jasmine Rice (1 Sack)', 2, 2550.00, 5100.00, '2025-07-16 03:35:26'),
+(33, 19, 2, 'Jasmine Rice (1 Sack)', 2, 2550.00, 5100.00, '2025-07-16 03:37:13');
 
 -- --------------------------------------------------------
 
 --
-=======
->>>>>>> f675cbd9407bad57bf9e632e3b5a7b82eac05c8f
+-- Table structure for table `transactions`
+--
+
+CREATE TABLE `transactions` (
+  `id` int(11) NOT NULL,
+  `customer_id` int(11) DEFAULT NULL,
+  `customer_name` varchar(255) NOT NULL,
+  `total_amount` decimal(10,2) NOT NULL,
+  `payment_method` varchar(50) NOT NULL,
+  `payment_method_id` int(11) DEFAULT NULL,
+  `amount_received` decimal(10,2) NOT NULL,
+  `change_amount` decimal(10,2) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `transactions`
+--
+
+INSERT INTO `transactions` (`id`, `customer_id`, `customer_name`, `total_amount`, `payment_method`, `payment_method_id`, `amount_received`, `change_amount`, `created_at`) VALUES
+(16, 1, 'Joseph Emmanuel N. Calvo', 2578.00, 'Cheque', 3, 5000.00, 2422.00, '2025-07-16 03:31:04'),
+(17, 0, 'Walk-in Customer', 150.00, 'Cash', 1, 200.00, 50.00, '2025-07-16 03:35:07'),
+(18, 2, 'Zhedrick J. Villavecencio', 5100.00, 'Cheque', 3, 10000.00, 4900.00, '2025-07-16 03:35:26'),
+(19, 2, 'Zhedrick J. Villavecencio', 5100.00, 'Cheque', 3, 7500.00, 2400.00, '2025-07-16 03:37:13');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `users`
 --
 
@@ -245,20 +233,13 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `username`, `password`, `full_name`, `created_at`) VALUES
-(3, 'admin', '$2y$10$1MPaVjz.EUNGgzwKdF1iMeFtHd0P9ukfj5gfniZED2umL/LzJwdK2', 'Administrator', '2025-07-08 14:38:20'),
-(4, 'abico', '$2y$10$1MPaVjz.EUNGgzwKdF1iMeFtHd0P9ukfj5gfniZED2umL/LzJwdK2', 'Administrator', '2025-07-08 14:49:56');
+(3, 'admin', '$2y$10$1MPaVjz.EUNGgzwKdF1iMeFtHd0P9ukfj5gfniZED2umL/LzJwdK2', 'Administrator', '2025-07-08 21:38:20'),
+(4, 'abico', '$2y$10$1MPaVjz.EUNGgzwKdF1iMeFtHd0P9ukfj5gfniZED2umL/LzJwdK2', 'Administrator', '2025-07-08 21:49:56'),
+(5, 'user', '$2y$10$gjlaLigXjZ/Bl70n5YkmF.fU/B5eqGUHmt4u6RmdFxPkeUJ9ubfDK', 'Administrator', '2025-07-13 06:17:32');
 
 --
 -- Indexes for dumped tables
 --
-
---
--- Indexes for table `activity_logs`
---
-ALTER TABLE `activity_logs`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_customer` (`customer_id`),
-  ADD KEY `idx_created` (`created_at`);
 
 --
 -- Indexes for table `customers`
@@ -270,11 +251,14 @@ ALTER TABLE `customers`
 -- Indexes for table `inventory_activity_log`
 --
 ALTER TABLE `inventory_activity_log`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `payment_methods`
+--
+ALTER TABLE `payment_methods`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_user_id` (`user_id`),
-  ADD KEY `idx_created_at` (`created_at`),
-  ADD KEY `idx_action` (`action`),
-  ADD KEY `idx_product_id` (`product_id`);
+  ADD UNIQUE KEY `name` (`name`);
 
 --
 -- Indexes for table `products`
@@ -285,11 +269,24 @@ ALTER TABLE `products`
   ADD KEY `idx_product_type` (`unit_type`);
 
 --
--- Indexes for table `sales`
+-- Indexes for table `sales_activity_log`
 --
-ALTER TABLE `sales`
+ALTER TABLE `sales_activity_log`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `sale_items`
+--
+ALTER TABLE `sale_items`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `transactions`
+--
+ALTER TABLE `transactions`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `customer_id` (`customer_id`);
+  ADD KEY `customer_id` (`customer_id`),
+  ADD KEY `idx_transaction_payment_method` (`payment_method_id`);
 
 --
 -- Indexes for table `users`
@@ -303,64 +300,40 @@ ALTER TABLE `users`
 --
 
 --
--- AUTO_INCREMENT for table `activity_logs`
---
-ALTER TABLE `activity_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
-
---
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `inventory_activity_log`
 --
 ALTER TABLE `inventory_activity_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-<<<<<<< HEAD
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
-=======
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
->>>>>>> f675cbd9407bad57bf9e632e3b5a7b82eac05c8f
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT for table `sales`
+-- AUTO_INCREMENT for table `sales_activity_log`
 --
-ALTER TABLE `sales`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+ALTER TABLE `sales_activity_log`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
--- AUTO_INCREMENT for table `users`
---
-ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- Constraints for dumped tables
---
-
---
--- Constraints for table `sales`
---
-ALTER TABLE `sales`
-  ADD CONSTRAINT `sales_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL;
-<<<<<<< HEAD
-
---
--- Constraints for table `sale_items`
+-- AUTO_INCREMENT for table `sale_items`
 --
 ALTER TABLE `sale_items`
-  ADD CONSTRAINT `fk_sale_items_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `sale_items_ibfk_1` FOREIGN KEY (`sale_id`) REFERENCES `sales` (`id`) ON DELETE CASCADE;
-=======
->>>>>>> f675cbd9407bad57bf9e632e3b5a7b82eac05c8f
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+
+--
+-- AUTO_INCREMENT for table `transactions`
+--
+ALTER TABLE `transactions`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
