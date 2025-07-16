@@ -1,7 +1,7 @@
 <?php
 class ActivityLog {
     private $conn;
-    private $table_name = "sales_activity_log";
+    private $table_name = "ledger_activity_log";
 
     public $id;
     public $user_id;
