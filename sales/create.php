@@ -232,14 +232,24 @@ $products = $product->readAll();
                             </div>
                         </div>
                         <div class="mb-3">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="payLaterCheckbox">
+                                <label class="form-check-label fw-bold text-danger" for="payLaterCheckbox">
+                                    <i class="fas fa-clock me-1"></i> Pay Later (Record as Debt)
+                                </label>
+                            </div>
                             <label for="amountReceived" class="form-label">Amount Received</label>
                             <div class="input-group mb-3">
                                 <span class="input-group-text">₱</span>
-                                <input type="number" class="form-control" id="amountReceived" placeholder="0.00" step="0.01">
+                                <input type="number" class="form-control" id="amountReceived" placeholder="0.00" step="0.01" value="0.00">
                             </div>
-                            <div class="d-flex justify-content-between mb-3 fs-5">
+                            <div class="d-flex justify-content-between mb-2 fs-5">
                                 <span>Change:</span>
                                 <span id="changeAmount" class="fw-bold">₱0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3 fs-5 text-danger" id="remainingAmountContainer" style="display: none;">
+                                <span>Remaining Balance:</span>
+                                <span id="remainingAmount" class="fw-bold">₱0.00</span>
                             </div>
                         </div>
                         <div class="d-grid gap-2">
@@ -293,25 +303,37 @@ $products = $product->readAll();
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <h6>Order Summary</h6>
-                        <div id="confirmationItems" class="mb-3"></div>
-                        <hr>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Subtotal:</span>
-                            <span id="confirmationSubtotal">₱0.00</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Payment Method:</span>
-                            <span id="confirmationPaymentMethod">-</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Amount Received:</span>
-                            <span id="confirmationAmountReceived">₱0.00</span>
-                        </div>
-                        <div class="d-flex justify-content-between fw-bold">
-                            <span>Change:</span>
-                            <span id="confirmationChange">₱0.00</span>
+                    <h6>Order Summary:</h6>
+                    <div id="confirmationItems" class="mb-3"></div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>Subtotal:</strong>
+                        <span id="confirmationSubtotal"></span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>Payment Method:</strong>
+                        <span id="confirmationPaymentMethod"></span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>Amount Received:</strong>
+                        <span id="confirmationAmountReceived"></span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3 fw-bold">
+                        <strong>Change:</strong>
+                        <span id="confirmationChange"></span>
+                    </div>
+                    <!-- Debt Information -->
+                    <div id="confirmationDebtNotice" class="alert alert-warning p-2 mb-3" style="display: none;">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <div>
+                                <strong>This is a debt transaction</strong>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <span>Remaining Balance:</span>
+                                    <strong id="confirmationRemainingBalance">₱0.00</strong>
+                                </div>
+                                <small class="d-block text-muted mt-1">The remaining amount will be recorded as debt for this customer.</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -618,20 +640,62 @@ $products = $product->readAll();
                 const totalAmount = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
                 const change = amountReceived - totalAmount;
                 const changeAmount = Math.max(0, change);
+                const remainingAmount = Math.max(0, totalAmount - amountReceived);
                 
                 $('#changeAmount').text('₱' + changeAmount.toFixed(2));
+                
+                if (remainingAmount > 0) {
+                    $('#remainingAmount').text('₱' + remainingAmount.toFixed(2));
+                    $('#remainingAmountContainer').show();
+                } else {
+                    $('#remainingAmountContainer').hide();
+                }
                 
                 // Store the change amount in a data attribute
                 $('#amountReceived').data('change-amount', changeAmount);
                 
-                // Enable/disable process payment button
-                $('#processPayment').prop('disabled', change < 0);
+                // Always enable process payment button, even if amount is insufficient
+                $('#processPayment').prop('disabled', false);
                 
-                return changeAmount;
+                return {
+                    change: changeAmount,
+                    remaining: remainingAmount
+                };
             }
 
             // Amount received input
             $('#amountReceived').on('input', calculateChange);
+            
+            // Pay Later checkbox change handler
+            $('#payLaterCheckbox').change(function() {
+                const isChecked = $(this).is(':checked');
+                const $amountInput = $('#amountReceived');
+                
+                if (isChecked) {
+                    // Set amount received to 0 and disable input
+                    $amountInput.val('0.00').prop('readonly', true);
+                    // Show remaining amount
+                    $('#remainingAmountContainer').show();
+                } else {
+                    // Enable amount input
+                    $amountInput.prop('readonly', false);
+                    // Recalculate change
+                    $amountInput.trigger('input');
+                }
+                
+                // Recalculate change
+                calculateChange();
+            });
+            
+            // Toggle pay later option
+            $('#payLaterCheckbox').change(function() {
+                const isChecked = $(this).is(':checked');
+                if (isChecked) {
+                    $('#amountReceived').val('0').trigger('input').prop('readonly', true);
+                } else {
+                    $('#amountReceived').val('').prop('readonly', false).trigger('input');
+                }
+            });
 
             // Reset cart function
             function resetCart() {
@@ -675,58 +739,77 @@ $products = $product->readAll();
             // Process payment function
             function processPayment(paymentRequest) {
                 const { paymentData, $btn } = paymentRequest;
+                const isDebt = paymentData.is_debt;
                 
                 // Disable button to prevent double submission
                 $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...');
-
+                
+                // Show loading state
+                const loadingAlert = Swal.fire({
+                    title: isDebt ? 'Recording Debt Transaction' : 'Processing Payment',
+                    html: isDebt ? 'Please wait while we record this debt transaction...' : 'Please wait while we process your payment...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
                 // Send data to server
                 $.ajax({
                     url: 'process_sale.php',
                     type: 'POST',
-                    contentType: 'application/json',
                     data: JSON.stringify(paymentData),
+                    contentType: 'application/json',
+                    dataType: 'json',
                     success: function(response) {
+                        loadingAlert.close();
+                        
                         if (response.success) {
-                            // Show success message with transaction details
-                            const transaction = response.transaction;
-                            let itemsList = '';
+                            // Prepare success message based on transaction type
+                            const successMessage = isDebt 
+                                ? `Transaction recorded as debt. Remaining balance: ₱${paymentData.remaining_balance.toFixed(2)} has been added to the customer's account.`
+                                : 'The transaction has been completed successfully.';
                             
-                            if (transaction.items_list) {
-                                itemsList = `<div class="mt-3"><strong>Items:</strong> ${transaction.items_list}</div>`;
-                            }
-                            
-                            $('#successMessage').html(`
-                                <h5>Transaction Completed Successfully!</h5>
-                                <div class="mt-3">
-                                    <p><strong>Transaction ID:</strong> ${transaction.id}</p>
-                                    <p><strong>Customer:</strong> ${transaction.customer_name}</p>
-                                    <p><strong>Total Amount:</strong> ₱${parseFloat(transaction.total_amount).toFixed(2)}</p>
-                                    <p><strong>Payment Method:</strong> ${transaction.payment_method}</p>
-                                    <p><strong>Amount Received:</strong> ₱${parseFloat(transaction.amount_received).toFixed(2)}</p>
-                                    <p><strong>Change:</strong> ₱${parseFloat(transaction.change_amount).toFixed(2)}</p>
-                                    ${itemsList}
-                                </div>
-                                <div class="mt-3 text-center">
-                                    <button type="button" class="btn btn-primary me-2" onclick="window.print()">
-                                        <i class="fas fa-print me-1"></i> Print Receipt
-                                    </button>
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                </div>
-                            `);
-                            
-                            successModal.show();
-                            
-                            // Reset form and return to cart view
-                            cart = [];
-                            updateCart();
-                            $('input[name="paymentMethod"]').prop('checked', false);
-                            $('#amountReceived').val('');
-                            $('#changeAmount').text('₱0.00');
-                            $('#customerSelect').val('').trigger('change');
-                            
-                            // Return to cart view
-                            $('#paymentSection').hide();
-                            $('#orderSummary').show();
+                            // Show success message
+                            Swal.fire({
+                                title: isDebt ? 'Debt Recorded!' : 'Payment Successful!',
+                                html: successMessage,
+                                icon: isDebt ? 'info' : 'success',
+                                confirmButtonText: 'Print Receipt',
+                                showCancelButton: true,
+                                cancelButtonText: 'Close',
+                                allowOutsideClick: false,
+                                didOpen: () => {
+                                    // Focus the print button for better UX
+                                    document.querySelector('.swal2-confirm').focus();
+                                }
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    // Open print receipt in new tab
+                                    window.open('receipt.php?invoice=' + response.invoice_number, '_blank');
+                                }
+                                
+                                // Reset the form and cart
+                                cart = [];
+                                updateCart();
+                                
+                                // Reset payment form
+                                $('#amountReceived').val('0.00').trigger('input').prop('readonly', false);
+                                $('input[name="paymentMethod"]').prop('checked', false);
+                                $('#payLaterCheckbox').prop('checked', false);
+                                $('#remainingAmountContainer').hide();
+                                
+                                // Go back to order summary
+                                $('#paymentSection').hide();
+                                $('#orderSummary').show();
+                                
+                                // Reset customer selection if it was a debt transaction
+                                if (isDebt) {
+                                    $('#customerSelect').val(null).trigger('change');
+                                    $('#customerId').val('');
+                                    $('#customerName').val('');
+                                }
+                            });
                             
                             // Reset payment method to default (Cash)
                             $('#cashPayment').prop('checked', true);
@@ -739,7 +822,17 @@ $products = $product->readAll();
                                 window.location.reload();
                             }, 3000);
                         } else {
-                            alert('Error: ' + (response.message || 'Unknown error occurred'));
+                            // Show error message
+                            Swal.fire({
+                                title: 'Error',
+                                text: response.message || 'An error occurred while processing the payment.',
+                                icon: 'error',
+                                confirmButtonText: 'OK',
+                                didOpen: () => {
+                                    // Focus the confirm button for better UX
+                                    document.querySelector('.swal2-confirm').focus();
+                                }
+                            });
                         }
                     },
                     error: function(xhr, status, error) {
@@ -760,14 +853,25 @@ $products = $product->readAll();
             };
             
             // Process payment button click handler
-            $('#processPayment').click(function() {
+            $('#processPayment').click(async function() {
                 // Get customer data
                 const customerId = $('#customerId').val();
                 let customerName = $('#customerName').val();
+                const isPayLater = $('#payLaterCheckbox').is(':checked');
                 
                 // If no customer is selected, use 'Walk-in Customer' as default
                 if (!customerId && !customerName) {
                     customerName = 'Walk-in Customer';
+                }
+                
+                // If it's a debt transaction, ensure a customer is selected
+                if (isPayLater && (!customerId || customerName === 'Walk-in Customer')) {
+                    return Swal.fire({
+                        title: 'Customer Required',
+                        text: 'Please select a customer before recording a debt.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
                 }
                 
                 // Cache DOM elements
@@ -777,22 +881,78 @@ $products = $product->readAll();
                 // Calculate totals
                 const totalAmount = parseFloat(cart.reduce((sum, item) => sum + parseFloat(item.total), 0).toFixed(2));
                 const amountReceived = parseFloat($amountReceived.val()) || 0;
-                const changeAmount = calculateChange(); // This ensures we have the latest calculated change
+                const calculation = calculateChange(); // Get latest calculations
+                const changeAmount = calculation.change;
+                const remainingAmount = calculation.remaining;
                 const paymentMethod = $paymentMethod.val();
                 
                 // Validate before proceeding
                 if (!cart.length) {
-                    return alert('Please add items to the cart');
+                    return Swal.fire({
+                        title: 'Empty Cart',
+                        text: 'Please add items to the cart before processing payment.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
                 }
 
                 if (!paymentMethod) {
-                    return alert('Please select a payment method');
+                    return Swal.fire({
+                        title: 'Payment Method Required',
+                        text: 'Please select a payment method.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+                
+                // If pay later is not checked and amount is insufficient
+                if (amountReceived < totalAmount && !isPayLater) {
+                    const { value: confirmDebt } = await Swal.fire({
+                        title: 'Insufficient Payment',
+                        html: `
+                            <div class="text-start">
+                                <p>The amount received (₱${amountReceived.toFixed(2)}) is less than the total amount (₱${totalAmount.toFixed(2)}).</p>
+                                <p class="mb-0">Would you like to record this as a debt?</p>
+                            </div>
+                        `,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, record as debt',
+                        cancelButtonText: 'Cancel',
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        focusCancel: true,
+                        customClass: {
+                            htmlContainer: 'text-start'
+                        }
+                    });
+
+                    if (confirmDebt) {
+                        // Check if customer is selected
+                        if (!customerId || customerName === 'Walk-in Customer') {
+                            await Swal.fire({
+                                title: 'Customer Required',
+                                text: 'Please select a customer before recording a debt.',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                            return;
+                        }
+                        
+                        // Set pay later and process payment
+                        $('#payLaterCheckbox').prop('checked', true);
+                        $('#amountReceived').val('0').trigger('input').prop('readonly', true);
+                        
+                        // Process payment after a short delay to allow UI to update
+                        setTimeout(() => $('#processPayment').click(), 100);
+                        return;
+                    }
+                    return; // User cancelled
                 }
 
-                if (amountReceived < totalAmount) {
-                    return alert('Amount received is less than the total amount');
-                }
-
+                // Calculate remaining balance for debt transactions
+                const remainingBalance = isPayLater ? remainingAmount : 0;
+                
                 // Prepare data for the server
                 const paymentData = {
                     customer_id: customerId || null,
@@ -807,8 +967,18 @@ $products = $product->readAll();
                     payment_method: paymentMethod,
                     amount_received: amountReceived,
                     change_amount: changeAmount,
-                    total_amount: totalAmount
+                    total_amount: totalAmount,
+                    is_debt: isPayLater,
+                    remaining_balance: remainingBalance
                 };
+                
+                // Update confirmation message if it's a debt transaction
+                if (isPayLater) {
+                    $('#confirmationDebtNotice').show();
+                    $('#confirmationRemainingBalance').text(`₱${remainingBalance.toFixed(2)}`);
+                } else {
+                    $('#confirmationDebtNotice').hide();
+                }
                 
                 // Show confirmation modal
                 const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));

@@ -66,6 +66,8 @@ try {
     $transaction->payment_method = $data['payment_method'];
     $transaction->amount_received = $data['amount_received'];
     $transaction->change_amount = $data['change_amount'];
+    $transaction->is_debt = $data['is_debt'] ?? false;
+    $transaction->remaining_balance = $data['remaining_balance'] ?? 0;
     $transaction->items = $data['items'];
     
     // Process the transaction

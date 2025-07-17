@@ -89,16 +89,37 @@ include __DIR__ . "/../templates/nav.php";
                     </table>
                 </div>
 
+                <?php 
+                $isDebt = isset($transaction['is_debt']) && $transaction['is_debt'] == 1;
+                $remainingBalance = isset($transaction['remaining_balance']) ? floatval($transaction['remaining_balance']) : 0;
+                $hasRemainingBalance = $remainingBalance > 0;
+                $displayBalance = $hasRemainingBalance ? -$remainingBalance : 0; // Show as negative for debt
+                ?>
+                
                 <div class="row mt-4">
                     <div class="col-md-6">
                         <div class="text-muted">Thank you for your business!</div>
+                        <?php if ($isDebt && $hasRemainingBalance): ?>
+                        <div class="alert alert-warning mt-2 p-2">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <div>
+                                    <strong>This is a debt transaction</strong>
+                                    <div class="d-flex justify-content-between mt-1">
+                                        <span>Remaining Balance:</span>
+                                        <strong>-₱<?php echo number_format($remainingBalance, 2); ?></strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
                     </div>
                     <div class="col-md-6">
                         <div class="table-responsive">
                             <table class="table table-sm">
                                 <tr>
                                     <th>Subtotal:</th>
-                                    <td class="text-end">₱ <?php echo number_format($transaction['total_amount'], 2); ?></td>
+                                    <td class="text-end">₱<?php echo number_format($transaction['total_amount'], 2); ?></td>
                                 </tr>
                                 <tr>
                                     <th>Payment Method:</th>
@@ -106,15 +127,23 @@ include __DIR__ . "/../templates/nav.php";
                                 </tr>
                                 <tr>
                                     <th>Amount Paid:</th>
-                                    <td class="text-end">₱ <?php echo number_format($transaction['amount_received'], 2); ?></td>
+                                    <td class="text-end">₱<?php echo number_format($transaction['amount_received'], 2); ?></td>
                                 </tr>
+                                <?php if ($transaction['change_amount'] > 0): ?>
                                 <tr>
                                     <th>Change:</th>
-                                    <td class="text-end">₱ <?php echo number_format($transaction['change_amount'], 2); ?></td>
+                                    <td class="text-end">₱<?php echo number_format($transaction['change_amount'], 2); ?></td>
                                 </tr>
+                                <?php endif; ?>
+                                <?php if ($hasRemainingBalance): ?>
+                                <tr class="table-warning">
+                                    <th>Remaining Balance:</th>
+                                    <td class="text-end fw-bold">-₱<?php echo number_format($remainingBalance, 2); ?></td>
+                                </tr>
+                                <?php endif; ?>
                                 <tr class="table-primary">
                                     <th>Total Amount:</th>
-                                    <td class="text-end fw-bold">₱ <?php echo number_format($transaction['total_amount'], 2); ?></td>
+                                    <td class="text-end fw-bold">₱<?php echo number_format($transaction['total_amount'], 2); ?></td>
                                 </tr>
                             </table>
                         </div>

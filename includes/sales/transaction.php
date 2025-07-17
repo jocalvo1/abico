@@ -11,6 +11,8 @@ class Transaction {
     public $payment_method;
     public $amount_received;
     public $change_amount;
+    public $is_debt = false;
+    public $remaining_balance = 0.00;
     public $created_at;
     public $items = [];
 
@@ -51,11 +53,26 @@ class Transaction {
         return $stmt->execute();
     }
 
+    // Update customer's debt balance
+    private function updateCustomerDebt($customerId, $amount) {
+        if (!$customerId) return false;
+        
+        $query = "UPDATE customers SET debt = GREATEST(0, COALESCE(debt, 0) + :amount) WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":amount", $amount);
+        $stmt->bindParam(":id", $customerId);
+        return $stmt->execute();
+    }
+
     // Create a new transaction
     public function create() {
         try {
             // Start transaction
             $this->conn->beginTransaction();
+
+            // Calculate remaining balance if this is a debt transaction
+            $this->remaining_balance = $this->is_debt ? 
+                max(0, $this->total_amount - $this->amount_received) : 0;
 
             // Insert into transactions table
             $query = "INSERT INTO " . $this->table_name . " 
@@ -64,6 +81,8 @@ class Transaction {
                          total_amount = :total_amount,
                          payment_method = :payment_method,
                          payment_method_id = :payment_method_id,
+                         is_debt = :is_debt,
+                         remaining_balance = :remaining_balance,
                          amount_received = :amount_received,
                          change_amount = :change_amount";
 
@@ -86,6 +105,8 @@ class Transaction {
             $stmt->bindParam(":total_amount", $this->total_amount);
             $stmt->bindParam(":payment_method", $this->payment_method);
             $stmt->bindParam(":payment_method_id", $payment_method_id);
+            $stmt->bindParam(":is_debt", $this->is_debt, PDO::PARAM_BOOL);
+            $stmt->bindParam(":remaining_balance", $this->remaining_balance);
             $stmt->bindParam(":amount_received", $this->amount_received);
             $stmt->bindParam(":change_amount", $this->change_amount);
 
@@ -130,6 +151,13 @@ class Transaction {
                 // Log sales activity
                 if(!$this->logSalesActivity()) {
                     throw new Exception("Error logging sales activity");
+                }
+
+                // Update customer's debt balance if this is a debt transaction
+                if ($this->is_debt && $this->customer_id) {
+                    if (!$this->updateCustomerDebt($this->customer_id, $this->remaining_balance)) {
+                        throw new Exception("Failed to update customer's debt balance");
+                    }
                 }
 
                 // Commit transaction
