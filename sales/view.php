@@ -107,7 +107,7 @@ include __DIR__ . "/../templates/nav.php";
                                     <strong>This is a debt transaction</strong>
                                     <div class="d-flex justify-content-between mt-1">
                                         <span>Remaining Balance:</span>
-                                        <strong>-₱<?php echo number_format($remainingBalance, 2); ?></strong>
+                                        <strong>₱<?php echo number_format($remainingBalance, 2); ?></strong>
                                     </div>
                                 </div>
                             </div>
@@ -138,7 +138,7 @@ include __DIR__ . "/../templates/nav.php";
                                 <?php if ($hasRemainingBalance): ?>
                                 <tr class="table-warning">
                                     <th>Remaining Balance:</th>
-                                    <td class="text-end fw-bold">-₱<?php echo number_format($remainingBalance, 2); ?></td>
+                                    <td class="text-end fw-bold">₱<?php echo number_format($remainingBalance, 2); ?></td>
                                 </tr>
                                 <?php endif; ?>
                                 <tr class="table-primary">

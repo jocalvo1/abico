@@ -670,10 +670,16 @@ $products = $product->readAll();
             $('#payLaterCheckbox').change(function() {
                 const isChecked = $(this).is(':checked');
                 const $amountInput = $('#amountReceived');
+                const totalAmount = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
                 
                 if (isChecked) {
-                    // Set amount received to 0 and disable input
-                    $amountInput.val('0.00').prop('readonly', true);
+                    // Keep the current amount but lock the input
+                    const currentAmount = parseFloat($amountInput.val()) || 0;
+                    if (currentAmount <= 0) {
+                        // If no amount was entered, default to 0
+                        $amountInput.val('0.00');
+                    }
+                    $amountInput.prop('readonly', true);
                     // Show remaining amount
                     $('#remainingAmountContainer').show();
                 } else {
@@ -941,7 +947,9 @@ $products = $product->readAll();
                         
                         // Set pay later and process payment
                         $('#payLaterCheckbox').prop('checked', true);
-                        $('#amountReceived').val('0').trigger('input').prop('readonly', true);
+                        // Keep the current amount but lock the input
+                        const currentAmount = parseFloat($('#amountReceived').val()) || 0;
+                        $('#amountReceived').val(currentAmount.toFixed(2)).trigger('input').prop('readonly', true);
                         
                         // Process payment after a short delay to allow UI to update
                         setTimeout(() => $('#processPayment').click(), 100);
