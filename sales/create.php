@@ -63,7 +63,7 @@ $products = $product->readAll();
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header">
-                        <h4 class="mb-0">New Sale</h4>
+                        <h4 class="mb-0"><?= date('F j, Y') ?></h4>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
