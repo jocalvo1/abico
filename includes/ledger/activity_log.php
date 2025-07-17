@@ -1,7 +1,7 @@
 <?php
 class ActivityLog {
     private $conn;
-    private $table_name = "activity_logs";
+    private $table_name = "ledger_activity_log";
 
     public $id;
     public $user_id;
@@ -27,29 +27,35 @@ class ActivityLog {
                     details = :details,
                     old_value = :old_value,
                     new_value = :new_value,
-                    update_type = :update_type";
+                    update_type = :update_type,
+                    created_at = NOW()";
         
         $stmt = $this->conn->prepare($query);
         
         // Sanitize
         $this->user_id = htmlspecialchars(strip_tags($this->user_id));
-        $this->customer_id = htmlspecialchars(strip_tags($this->customer_id));
+        $this->customer_id = $this->customer_id !== null ? htmlspecialchars(strip_tags($this->customer_id)) : null;
         $this->action = htmlspecialchars(strip_tags($this->action));
-        $this->details = htmlspecialchars(strip_tags($this->details));
+        $this->details = $this->details !== null ? htmlspecialchars(strip_tags($this->details)) : null;
         
-        // Bind values
-        $stmt->bindParam(":user_id", $this->user_id);
-        $stmt->bindParam(":customer_id", $this->customer_id);
-        $stmt->bindParam(":action", $this->action);
-        $stmt->bindParam(":details", $this->details);
-        $stmt->bindParam(":old_value", $this->old_value);
-        $stmt->bindParam(":new_value", $this->new_value);
-        $stmt->bindParam(":update_type", $this->update_type);
+        // Bind values with proper null handling
+        $stmt->bindValue(":user_id", $this->user_id, PDO::PARAM_INT);
+        $stmt->bindValue(":customer_id", $this->customer_id, $this->customer_id !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
+        $stmt->bindValue(":action", $this->action, PDO::PARAM_STR);
+        $stmt->bindValue(":details", $this->details, $this->details !== null ? PDO::PARAM_STR : PDO::PARAM_NULL);
+        $stmt->bindValue(":old_value", $this->old_value, $this->old_value !== null ? PDO::PARAM_STR : PDO::PARAM_NULL);
+        $stmt->bindValue(":new_value", $this->new_value, $this->new_value !== null ? PDO::PARAM_STR : PDO::PARAM_NULL);
+        $stmt->bindValue(":update_type", $this->update_type, $this->update_type !== null ? PDO::PARAM_STR : PDO::PARAM_NULL);
         
-        if($stmt->execute()) {
-            return true;
+        try {
+            if($stmt->execute()) {
+                return true;
+            }
+            return false;
+        } catch (PDOException $e) {
+            error_log("Error creating activity log: " . $e->getMessage());
+            return false;
         }
-        return false;
     }
 
     // Read all activity logs with optional filters
@@ -59,8 +65,11 @@ class ActivityLog {
                  LEFT JOIN customers c ON l.customer_id = c.id 
                  WHERE 1=1";
         
+        $params = [];
+        
         if($customer_id) {
             $query .= " AND l.customer_id = :customer_id";
+            $params[':customer_id'] = $customer_id;
         }
         
         $query .= " ORDER BY l.created_at DESC 
@@ -68,35 +77,48 @@ class ActivityLog {
         
         $stmt = $this->conn->prepare($query);
         
-        if($customer_id) {
-            $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+        // Bind parameters
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value, PDO::PARAM_INT);
         }
         
-        $stmt->bindParam(':start', $start, PDO::PARAM_INT);
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':start', (int)$start, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
         
-        $stmt->execute();
-        return $stmt;
+        try {
+            $stmt->execute();
+            return $stmt;
+        } catch (PDOException $e) {
+            error_log("Error reading activity logs: " . $e->getMessage());
+            return false;
+        }
     }
 
     // Get total count of logs
     public function countAll($customer_id = null) {
         $query = "SELECT COUNT(*) as total FROM " . $this->table_name . " WHERE 1=1";
+        $params = [];
         
         if($customer_id) {
             $query .= " AND customer_id = :customer_id";
+            $params[':customer_id'] = $customer_id;
         }
         
         $stmt = $this->conn->prepare($query);
         
-        if($customer_id) {
-            $stmt->bindParam(':customer_id', $customer_id, PDO::PARAM_INT);
+        // Bind parameters
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value, PDO::PARAM_INT);
         }
         
-        $stmt->execute();
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        return $row['total'];
+        try {
+            $stmt->execute();
+            $row = $stmt->fetch(PDO::PARAM_NULL);
+            return $row ? (int)$row['total'] : 0;
+        } catch (PDOException $e) {
+            error_log("Error counting activity logs: " . $e->getMessage());
+            return 0;
+        }
     }
 
     // Log a new activity
