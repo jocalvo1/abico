@@ -141,10 +141,7 @@ $(document).ready(function() {
     $('#activityTable').DataTable({
         "pageLength": 5,
         "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
-        "order": [[3, 'desc']],
-        "columnDefs": [
-            { "orderable": false, "targets": [0] }
-        ],
+        "order": [[3, 'desc']], // Default sort by Date & Time descending
         "language": {
             "search": "Search:",
             "searchPlaceholder": "Search by customer name, description...",

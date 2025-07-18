@@ -68,62 +68,21 @@ $base = "/ABICO";
                             </li>
                             <li>
                                 <div class="message-notif-scroll scrollbar-outer">
-                                <div class="notif-center">
-                                    <a href="#">
-                                    <div class="notif-img">
-                                        <img
-                                        src="<?= $base; ?>/assets/img/jm_denis.jpg"
-                                        alt="Img Profile"
-                                        />
+                                    <div class="notif-center">
+                                        <a href="#">
+                                            <div class="notif-img">
+                                                <img
+                                                src="<?= $base; ?>/assets/img/jm_denis.jpg"
+                                                alt="Img Profile"
+                                                />
+                                            </div>
+                                            <div class="notif-content">
+                                                <span class="subject">Jimmy Denis</span>
+                                                <span class="block"> How are you ? </span>
+                                                <span class="time">5 minutes ago</span>
+                                            </div>  
+                                        </a>
                                     </div>
-                                    <div class="notif-content">
-                                        <span class="subject">Jimmy Denis</span>
-                                        <span class="block"> How are you ? </span>
-                                        <span class="time">5 minutes ago</span>
-                                    </div>
-                                    </a>
-                                    <a href="#">
-                                    <div class="notif-img">
-                                        <img
-                                        src="<?= $base; ?>/assets/img/chadengle.jpg"
-                                        alt="Img Profile"
-                                        />
-                                    </div>
-                                    <div class="notif-content">
-                                        <span class="subject">Chad</span>
-                                        <span class="block"> Ok, Thanks ! </span>
-                                        <span class="time">12 minutes ago</span>
-                                    </div>
-                                    </a>
-                                    <a href="#">
-                                    <div class="notif-img">
-                                        <img
-                                        src="<?= $base; ?>/assets/img/mlane.jpg"
-                                        alt="Img Profile"
-                                        />
-                                    </div>
-                                    <div class="notif-content">
-                                        <span class="subject">Jhon Doe</span>
-                                        <span class="block">
-                                        Ready for the meeting today...
-                                        </span>
-                                        <span class="time">12 minutes ago</span>
-                                    </div>
-                                    </a>
-                                    <a href="#">
-                                    <div class="notif-img">
-                                        <img
-                                        src="<?= $base; ?>/assets/img/talha.jpg"
-                                        alt="Img Profile"
-                                        />
-                                    </div>
-                                    <div class="notif-content">
-                                        <span class="subject">Talha</span>
-                                        <span class="block"> Hi, Apa Kabar ? </span>
-                                        <span class="time">17 minutes ago</span>
-                                    </div>
-                                    </a>
-                                </div>
                                 </div>
                             </li>
                             <li>
