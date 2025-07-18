@@ -31,7 +31,6 @@ $offset = ($page - 1) * $perPage;
 $stmt = $activityLog->readAll(0, 1000); // Get all logs for DataTable to handle pagination
 $totalLogs = $activityLog->countAll();
 
-// Include template header and sidebar
 include __DIR__ . "/../templates/header.php";
 include __DIR__ . "/../templates/sidebar.php";
 include __DIR__ . "/../templates/nav.php";
@@ -142,6 +141,9 @@ include __DIR__ . "/../templates/nav.php";
         </div>
     </div>
 </div>
+
+<?php include __DIR__ . "/../templates/footer.php"; ?>
+<?php include __DIR__ . "/../templates/scripts.php"; ?>
 
 <?php 
 // Function to format time elapsed

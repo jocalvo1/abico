@@ -54,27 +54,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception('Could not start transaction');
             }
             
-            // Update the debt
-            if (!$customer->updateDebt()) {
+            // Update the debt with notes - this will also handle the activity logging
+            $notes = $_POST['notes'] ?? null;
+            if (!$customer->updateDebt($notes)) {
                 throw new Exception('Failed to update customer debt');
-            }
-            
-            // Log the activity
-            require_once __DIR__ . '/../includes/ledger/activity_log.php';
-            $activityLog = new ActivityLog($db);
-            $logResult = $activityLog->log(
-                $db, 
-                $_SESSION['user_id'] ?? 0, 
-                $customer->id, 
-                'update_debt', 
-                'Updated customer debt',
-                isset($_POST['old_debt']) ? (float)$_POST['old_debt'] : null,
-                (float)$customer->debt,
-                $_POST['update_type'] ?? null
-            );
-            
-            if (!$logResult) {
-                throw new Exception('Failed to log activity');
             }
             
             // Commit transaction
@@ -212,48 +195,67 @@ include __DIR__ . "/../templates/nav.php";
                     </script>
                 <?php endif; ?>
                             
+                <!-- Status Legend -->
+                <div class="mb-3 d-flex align-items-center">
+                    <span class="me-3">Status:</span>
+                    <span class="me-3"><i class="fas fa-circle text-success me-1"></i> Paid</span>
+                    <span><i class="fas fa-circle text-danger me-1"></i> Has Debt</span>
+                </div>
+                
                 <!-- Customers Table -->
                 <div class="table-responsive">
-                    <table id="customerTable" class="table table-striped table-hover">
-                        <thead>
+                    <table id="customerTable" class="table table-striped table-hover w-100">
+                        <thead class="table-light">
                             <tr>
                                 <th>#</th>
                                 <th>Customer Name</th>
+                                <th>Status</th>
                                 <th>Date Added</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php 
                             // Reset the statement pointer to the beginning
                             $stmt->execute();
+                            $count = 1;
                             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)): 
                                 $statusClass = $row['debt'] > 0 ? 'text-danger' : 'text-success';
                                 $statusIcon = 'fa-circle';
                                 $statusText = $row['debt'] > 0 ? 'Has Debt' : 'Paid';
+                                $debtAmount = number_format($row['debt'], 2);
                             ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($row['id']); ?></td>
-                                    <td style="position: relative;">
-                                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                                            <span style="vertical-align: middle; flex-grow: 1;"><?php echo htmlspecialchars($row['customer_name']); ?></span>
-                                            <div style="display: flex; align-items: center; gap: 10px;">
-                                                <i class="fas <?php echo $statusIcon; ?> <?php echo $statusClass; ?>" 
-                                                   style="font-size: 0.7em; vertical-align: middle;"></i>
-                                                <button class="btn btn-info ms-2 btn-sm view-customer" 
-                                                    data-id="<?php echo $row['id']; ?>"
-                                                    data-name="<?php echo htmlspecialchars($row['customer_name']); ?>"
-                                                    data-contact="<?php echo htmlspecialchars($row['contact']); ?>"
-                                                    data-debt="<?php echo $row['debt']; ?>"
-                                                    data-created="<?php echo date('M d, Y', strtotime($row['created_at'])); ?>"
-                                                    data-status="<?php echo $statusText; ?>"
-                                                    data-status-class="<?php echo $statusClass; ?>"
-                                                    data-status-icon="<?php echo $statusIcon; ?>">
-                                                    view record
-                                                </button>
-                                            </div>
-                                        </div>
+                                    <td class="align-middle"><?php echo $count++; ?></td>
+                                    <td class="align-middle">
+                                        <?php echo htmlspecialchars($row['customer_name']); ?>
+                                        <?php if (!empty($row['contact'])): ?>
+                                            <br><small class="text-muted"><?php echo htmlspecialchars($row['contact']); ?></small>
+                                        <?php endif; ?>
                                     </td>
-                                    <td><?php echo date('M d, Y', strtotime($row['created_at'])); ?></td>
+                                    <td class="align-middle text-center">
+                                        <i class="fas fa-circle text-<?php echo $row['debt'] > 0 ? 'danger' : 'success'; ?>" 
+                                           title="<?php echo $statusText . ($row['debt'] > 0 ? ' (₱' . $debtAmount . ')' : ''); ?>"></i>
+                                    </td>
+                                    <td class="align-middle"><?php echo date('M d, Y', strtotime($row['created_at'])); ?></td>
+                                    <td class="align-middle text-nowrap">
+                                        <button class="btn btn-sm btn-outline-primary view-customer d-flex align-items-center" 
+                                            data-id="<?php echo $row['id']; ?>"
+                                            data-name="<?php echo htmlspecialchars($row['customer_name']); ?>"
+                                            data-contact="<?php echo htmlspecialchars($row['contact']); ?>"
+                                            data-debt="<?php echo $row['debt']; ?>"
+                                            data-created="<?php echo date('M d, Y', strtotime($row['created_at'])); ?>"
+                                            data-status="<?php echo $statusText; ?>"
+                                            data-status-class="<?php echo $statusClass; ?>"
+                                            data-status-icon="<?php echo $statusIcon; ?>"
+                                            title="View and manage <?php echo htmlspecialchars($row['customer_name']); ?>'s account details and transaction history"
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="top"
+                                            style="transition: all 0.2s ease-in-out;">
+                                            <i class="fas fa-eye me-1"></i>
+                                            <span>View</span>
+                                        </button>
+                                    </td>
                                 </tr>
                             <?php endwhile; ?>
                         </tbody>
@@ -266,31 +268,55 @@ include __DIR__ . "/../templates/nav.php";
 
 <!-- View Customer Details Modal -->
 <div class="modal fade" id="viewCustomerModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Customer Details</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title d-flex align-items-center">
+                    <i class="fas fa-user-circle me-2"></i>
+                    <span>Customer Details</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <h4 id="customerName" class="mb-3"></h4>
-                    <p><strong>Contact:</strong> <span id="customerContact"></span></p>
-                    <p><strong>Current Debt:</strong> <span id="customerDebt" class="font-weight-bold"></span></p>
-                    <p><strong>Date Added:</strong> <span id="customerCreated"></span></p>
-                    <p><strong>Status:</strong> <span id="customerStatus"></span></p>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <h4 id="customerName" class="mb-1"></h4>
+                    <p class="text-muted" id="customerContact"></p>
+                </div>
+                
+                <div class="card bg-light mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Status</span>
+                            <span id="customerStatus" class="badge"></span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Current Debt</span>
+                            <span id="customerDebt" class="fw-bold"></span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Member Since</span>
+                            <span id="customerCreated" class="text-muted"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info d-flex align-items-center" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <div>Click 'Update Debt' to modify the customer's balance.</div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary edit-debt-btn" data-bs-toggle="modal" data-bs-target="#updateDebtModal">
-                    <i class="fa fa-edit"></i> Update Debt
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Close
                 </button>
-                <a href="#" class="btn btn-info view-history-btn">
-                    <i class="fa fa-history"></i> View History
+                <a href="customer_history.php?id=<?php echo $row['id']; ?>" 
+                   class="btn btn-outline-info view-history-btn"
+                   title="View transaction history">
+                    <i class="fas fa-history me-1"></i> History
                 </a>
+                <button type="button" class="btn btn-primary edit-debt-btn" data-bs-toggle="modal" data-bs-target="#updateDebtModal">
+                    <i class="fas fa-edit me-1"></i> Update Debt
+                </button>
             </div>
         </div>
     </div>
@@ -298,28 +324,73 @@ include __DIR__ . "/../templates/nav.php";
 
 <!-- Add Customer Modal -->
 <div class="modal fade" id="addCustomerModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add New Customer</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title d-flex align-items-center">
+                    <i class="fas fa-user-plus me-2"></i>
+                    <span>Add New Customer</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="addCustomerForm" method="POST" action="">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="customer_name">Customer Name *</label>
-                        <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+            <form id="addCustomerForm" action="" method="POST" class="needs-validation" novalidate>
+                <div class="modal-body p-4">
+                    <div class="mb-4">
+                        <label for="customer_name" class="form-label fw-medium">
+                            <i class="fas fa-user me-2 text-primary"></i>Customer Name
+                            <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-user"></i>
+                            </span>
+                            <input type="text" 
+                                   class="form-control form-control-lg" 
+                                   id="customer_name" 
+                                   name="customer_name" 
+                                   placeholder="Enter customer's full name" 
+                                   required
+                                   autofocus>
+                            <div class="invalid-feedback">
+                                Please provide a customer name
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="contact">Contact Number</label>
-                        <input type="text" class="form-control" id="contact" name="contact">
+                    
+                    <div class="mb-3">
+                        <label for="contact" class="form-label fw-medium">
+                            <i class="fas fa-phone me-2 text-primary"></i>Contact Number
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-phone"></i>
+                            </span>
+                            <input type="tel" 
+                                   class="form-control form-control-lg" 
+                                   id="contact" 
+                                   name="contact" 
+                                   pattern="[0-9]{11}"
+                                   maxlength="11"
+                                   inputmode="numeric"
+                                   oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11)"
+                                   placeholder="e.g. 09123456789">
+                            <div class="invalid-feedback">
+                                Please enter a valid 11-digit phone number
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save Customer</button>
+                <div class="modal-footer bg-light p-4 border-top">
+                    <button type="button" 
+                            class="btn btn-outline-secondary px-4" 
+                            data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" 
+                            class="btn btn-primary px-4"
+                            id="saveCustomerBtn">
+                        <i class="fas fa-save me-2"></i>Save Customer
+                    </button>
                 </div>
             </form>
         </div>
@@ -389,9 +460,23 @@ include __DIR__ . "/../templates/nav.php";
                             <small class="form-text text-muted">Enter the new total debt amount</small>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label for="debt_notes">Notes (Optional)</label>
+                        <textarea class="form-control" id="debt_notes" name="debt_notes" rows="2" placeholder="Add a note about this update (e.g., 'Partial payment for order #123')"></textarea>
+                        <small class="form-text text-muted">Add any relevant information about this debt update</small>
+                    </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Update Debt</button>
+                        <button type="button" 
+                                class="btn btn-secondary" 
+                                data-bs-dismiss="modal"
+                                title="Close without saving changes">
+                            <i class="fas fa-times me-1"></i>Close
+                        </button>
+                        <button type="submit" 
+                                class="btn btn-primary"
+                                title="Save the debt update">
+                            <i class="fas fa-save me-1"></i>Update Debt
+                        </button>
                     </div>
                 </div>
             </form>
@@ -411,28 +496,81 @@ include __DIR__ . "/../templates/nav.php";
 <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl, {
+            trigger: 'hover',
+            delay: {show: 500, hide: 100}
+        });
+    });
+
     // Initialize modals
     $('.modal').on('hidden.bs.modal', function () {
-        $(this).find('form').trigger('reset');
+        const form = $(this).find('form');
+        form.trigger('reset');
+        form.removeClass('was-validated');
+        // Reset any error states
+        form.find('.is-invalid').removeClass('is-invalid');
     });
+    
+    // Add Customer Form Validation
+    (function() {
+        'use strict';
+        const form = document.getElementById('addCustomerForm');
+        
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            form.classList.add('was-validated');
+            
+            // If form is valid, show loading state on submit button
+            if (form.checkValidity()) {
+                const submitBtn = document.getElementById('saveCustomerBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...';
+            }
+        }, false);
+        
+        // Auto-close success message after 5 seconds
+        const successAlert = document.querySelector('.alert-success');
+        if (successAlert) {
+            setTimeout(() => {
+                successAlert.classList.add('fade');
+                setTimeout(() => successAlert.remove(), 150);
+            }, 5000);
+        }
+    })();
     
     // Handle view customer details
     $(document).on('click', '.view-customer', function() {
         var id = $(this).data('id');
         var name = $(this).data('name');
         var contact = $(this).data('contact');
-        var debt = parseFloat($(this).data('debt')).toFixed(2);
+        var debt = parseFloat($(this).data('debt'));
+        var formattedDebt = debt.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         var created = $(this).data('created');
-        var status = $(this).data('status');
-        var statusClass = $(this).data('status-class');
-        var statusIcon = $(this).data('status-icon');
+        var statusText = debt > 0 ? 'Has Debt' : 'Paid';
+        var statusClass = debt > 0 ? 'bg-danger' : 'bg-success';
         
         // Update modal content
         $('#customerName').text(name);
-        $('#customerContact').text(contact || 'N/A');
-        $('#customerDebt').text('₱' + debt);
+        $('#customerContact').html(contact ? 
+            '<i class="fas fa-phone me-1"></i> ' + contact : 
+            '<span class="text-muted">No contact info</span>');
+            
+        $('#customerDebt').html(debt > 0 ? 
+            '<span class="text-danger fw-bold">₱' + formattedDebt + '</span>' : 
+            '<span class="text-success fw-bold">₱0.00</span>');
+            
         $('#customerCreated').text(created);
-        $('#customerStatus').html('<i class="fas ' + statusIcon + ' ' + statusClass + ' me-2"></i>' + status);
+        $('#customerStatus')
+            .removeClass('bg-success bg-danger')
+            .addClass(statusClass + ' text-white px-2 py-1 rounded')
+            .html('<i class="fas fa-circle me-1"></i>' + statusText);
         
         // Update edit button
         $('.edit-debt-btn')
@@ -440,8 +578,19 @@ include __DIR__ . "/../templates/nav.php";
             .data('name', name)
             .data('debt', debt);
         
-        // Show the modal
-        $('#viewCustomerModal').modal('show');
+        // Update history button
+        $('.view-history-btn')
+            .attr('href', 'customer_history.php?id=' + id)
+            .attr('style', 'text-decoration: none; color: inherit;');
+        
+        // Show the modal with animation
+        var modal = new bootstrap.Modal(document.getElementById('viewCustomerModal'));
+        modal.show();
+    });
+    
+    // Add animation to modal when shown
+    $('#viewCustomerModal').on('show.bs.modal', function () {
+        $(this).find('.modal-content').addClass('animate__animated animate__fadeInDown');
     });
 
     // Add DataTables CSS if not already included
@@ -453,31 +602,37 @@ include __DIR__ . "/../templates/nav.php";
         // Initialize DataTable with custom sorting
         var table = $('#customerTable').DataTable({
             responsive: true,
-            order: [[2, 'desc']], // Sort by date added by default
+            order: [[3, 'desc']], // Sort by date added by default
+            autoWidth: false,
             columnDefs: [
                 {
                     targets: 0, // # column
                     orderable: false,
                     className: 'text-center',
-                    width: '50px',
-                    render: function(data, type, row, meta) {
-                        return meta.row + 1;
-                    }
+                    width: '60px'
                 },
                 { 
                     targets: 1, // Customer Name column
-                    className: 'text-nowrap'
+                    width: '30%'
                 },
                 {
-                    targets: 2, // Date column
-                    className: 'text-nowrap',
-                    width: '180px',
+                    targets: 2, // Status column
+                    width: '60px',
+                    orderable: false,
+                    className: 'text-center'
+                },
+                {
+                    targets: 3, // Date column
+                    width: '150px',
                     type: 'date',
                     render: function(data, type, row) {
                         if (type === 'sort' || type === 'type') {
                             // Convert the date to a sortable format (YYYYMMDD)
                             var parts = data.split(' ')[0].split('-');
-                            return parts[2] + parts[1] + parts[0];
+                            if (parts.length === 3) {
+                                return parts[2] + parts[1] + parts[0];
+                            }
+                            return data;
                         }
                         return data;
                     }
@@ -487,16 +642,17 @@ include __DIR__ . "/../templates/nav.php";
                     orderable: false,
                     searchable: false,
                     className: 'text-center',
-                    width: '100px'
+                    width: '80px'
                 }
             ],
             language: {
-                search: "_INPUT_",
+                search: "",
                 searchPlaceholder: "Search customers...",
-                lengthMenu: "Show _MENU_ entries",
+                lengthMenu: "_MENU_ entries per page",
                 info: "Showing _START_ to _END_ of _TOTAL_ entries",
                 infoEmpty: "No entries found",
-                infoFiltered: '(filtered from _MAX_ total entries)',
+                infoFiltered: "(filtered from _MAX_ total entries)",
+                zeroRecords: "No matching records found",
                 paginate: {
                     first: 'First',
                     last: 'Last',
@@ -506,9 +662,9 @@ include __DIR__ . "/../templates/nav.php";
             },
             dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
                  "<'row'<'col-sm-12'tr>>" +
-                 "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                 "<'row mt-3'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
             pageLength: 10,
-            lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]]
+            lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]]
         });
         
         // Add custom search input
@@ -519,6 +675,15 @@ include __DIR__ . "/../templates/nav.php";
         
         // Style pagination
         $('.dataTables_paginate').addClass('mt-3');
+        
+        // Add hover effect to view buttons
+        $('.view-customer')
+            .on('mouseenter', function() {
+                $(this).addClass('btn-primary').removeClass('btn-outline-primary');
+            })
+            .on('mouseleave', function() {
+                $(this).removeClass('btn-primary').addClass('btn-outline-primary');
+            });
         
         // Make table header sticky on scroll
         $('.dataTables_scrollHead').css('position', 'sticky').css('top', '0').css('z-index', '5');
@@ -623,7 +788,7 @@ include __DIR__ . "/../templates/nav.php";
             e.preventDefault();
             var form = $(this);
             var oldDebt = parseFloat($('#current_debt').val().replace(/[^0-9.-]+/g,""));
-            var formData = form.serialize() + '&old_debt=' + oldDebt;
+            var formData = form.serialize() + '&old_debt=' + oldDebt + '&notes=' + encodeURIComponent($('#debt_notes').val());
             var submitBtn = form.find('button[type="submit"]');
             var originalBtnText = submitBtn.html();
             

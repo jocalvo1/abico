@@ -127,6 +127,9 @@ include __DIR__ . '/../templates/nav.php';
     </div>
 </div>
 
+<?php include __DIR__ . "/../templates/footer.php"; ?>
+<?php include __DIR__ . "/../templates/scripts.php"; ?>
+
 <!-- Add DataTables and jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
@@ -162,7 +165,3 @@ $(document).ready(function() {
     });
 });
 </script>
-
-<?php
-include __DIR__ . '/../templates/footer.php';
-?>
