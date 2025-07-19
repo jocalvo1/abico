@@ -130,7 +130,7 @@ include __DIR__ . "/templates/nav.php";
                                 <div class="col col-stats ms-3 ms-sm-0">
                                     <div class="numbers">
                                         <p class="card-category">Low Stock Items</p>
-                                        <h4 class="card-title"><?php echo count($low_stock_items); ?></h4>
+                                        <h4 class="card-title"><?php echo ($stock_counts['out_of_stock_count'] + $stock_counts['low_stock_count']); ?></h4>
                                     </div>
                                 </div>
                             </div>
@@ -278,7 +278,7 @@ include __DIR__ . "/templates/nav.php";
                                             <tr>
                                                 <td><?php echo htmlspecialchars($item['product_name']); ?></td>
                                                 <td>
-                                                    <span class="badge badge-<?php echo $item['stock_quantity'] < 5 ? 'danger' : 'warning'; ?>">
+                                                    <span class="badge badge-<?php echo $item['stock_quantity'] <= 0 ? 'danger' : 'warning'; ?>">
                                                         <?php echo $item['stock_quantity']; ?> pcs
                                                     </span>
                                                 </td>
