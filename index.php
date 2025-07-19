@@ -49,10 +49,31 @@ $stmt = $db->query("SELECT t.*, c.customer_name
                    ORDER BY t.created_at DESC LIMIT 5");
 $recent_transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Get low stock items
-$low_stock_items = [];
-$stmt = $db->query("SELECT * FROM products WHERE stock_quantity < 10 ORDER BY stock_quantity ASC LIMIT 5");
+// Get low stock and out of stock items
+$stmt = $db->query("SELECT p.*, 
+    CASE 
+        WHEN stock_quantity <= 0 THEN 0 
+        WHEN low_stock_threshold IS NOT NULL AND stock_quantity <= low_stock_threshold THEN 1 
+        WHEN low_stock_threshold IS NULL AND stock_quantity < 10 THEN 1 
+        ELSE 2 
+    END as stock_status
+FROM products p
+WHERE stock_quantity <= 0 OR (low_stock_threshold IS NOT NULL AND stock_quantity <= low_stock_threshold) OR (low_stock_threshold IS NULL AND stock_quantity < 10)
+ORDER BY stock_status ASC, stock_quantity ASC
+LIMIT 5");
 $low_stock_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Count low stock and out of stock items
+$stmt = $db->query("SELECT 
+    SUM(CASE WHEN stock_quantity <= 0 THEN 1 ELSE 0 END) as out_of_stock_count,
+    SUM(CASE 
+        WHEN stock_quantity > 0 AND 
+             ((low_stock_threshold IS NOT NULL AND stock_quantity <= low_stock_threshold) OR 
+              (low_stock_threshold IS NULL AND stock_quantity < 10)) 
+        THEN 1 ELSE 0 
+    END) as low_stock_count
+FROM products");
+$stock_counts = $stmt->fetch(PDO::FETCH_ASSOC);
 
 include __DIR__ . "/templates/header.php";
 include __DIR__ . "/templates/sidebar.php";
@@ -66,7 +87,7 @@ include __DIR__ . "/templates/nav.php";
             </div>
             <div class="ms-md-auto py-2 py-md-0">
                 <a href="inventory/index.php" class="btn btn-label-info btn-round me-2">View Inventory</a>
-                <a href="sales/index.php" class="btn btn-primary btn-round">New Transaction</a>
+                <a href="sales/create.php" class="btn btn-primary btn-round">New Transaction</a>
             </div>
         </div>
         
@@ -225,7 +246,22 @@ include __DIR__ . "/templates/nav.php";
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-header">
-                        <h4 class="card-title">Low Stock Items</h4>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4 class="card-title mb-0">Stock Alerts</h4>
+                            <a href="inventory/index.php" class="btn btn-sm btn-info">
+                                <i class="fas fa-boxes me-1"></i> Add Stocks
+                            </a>
+                        </div>
+                        <div class="d-flex gap-3">
+                            <div class="text-danger">
+                                <i class="fas fa-times-circle me-1"></i> 
+                                <span class="fw-bold"><?php echo $stock_counts['out_of_stock_count']; ?></span> Out of Stock
+                            </div>
+                            <div class="text-warning">
+                                <i class="fas fa-exclamation-triangle me-1"></i> 
+                                <span class="fw-bold"><?php echo $stock_counts['low_stock_count']; ?></span> Low Stock
+                            </div>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -234,7 +270,6 @@ include __DIR__ . "/templates/nav.php";
                                     <tr>
                                         <th>Product</th>
                                         <th>Stock</th>
-                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -247,16 +282,12 @@ include __DIR__ . "/templates/nav.php";
                                                         <?php echo $item['stock_quantity']; ?> pcs
                                                     </span>
                                                 </td>
-                                                <td>
-                                                    <a href="inventory/edit.php?id=<?php echo $item['id']; ?>" class="btn btn-xs btn-info">
-                                                        <i class="fa fa-edit"></i> Restock
-                                                    </a>
-                                                </td>
+
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
                                         <tr>
-                                            <td colspan="3" class="text-center">All items are well-stocked</td>
+                                            <td colspan="2" class="text-center">All items are well-stocked</td>
                                         </tr>
                                     <?php endif; ?>
                                 </tbody>
