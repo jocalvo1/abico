@@ -68,10 +68,27 @@ include __DIR__ . "/../templates/nav.php";
                         </thead>
                         <tbody>
                             <?php $count = 1; ?>
-                            <?php while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) { ?>
-                            <tr>
+                            <?php while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) { 
+                                $stockQuantity = $row['stock_quantity'] ?? $row['quantity'];
+                                $lowStockThreshold = $row['low_stock_threshold'] ?? null;
+                                $isLowStock = $lowStockThreshold !== null && $stockQuantity > 0 && $stockQuantity <= $lowStockThreshold;
+                                $isOutOfStock = $stockQuantity <= 0;
+                                $rowClass = $isOutOfStock ? 'table-danger' : ($isLowStock ? 'table-warning' : '');
+                            ?>
+                            <tr class="<?php echo $rowClass; ?>" data-low-stock-threshold="<?php echo $lowStockThreshold; ?>">
                                 <td></td> <!-- Will be populated by DataTables -->
-                                <td><?php echo htmlspecialchars($row['product_name']); ?></td>
+                                <td>
+                                    <?php echo htmlspecialchars($row['product_name']); ?>
+                                    <?php if ($isOutOfStock): ?>
+                                    <span class="badge bg-danger text-white ms-2" data-bs-toggle="tooltip" title="Out of stock!">
+                                        <i class="fas fa-times-circle me-1"></i> Out of Stock
+                                    </span>
+                                    <?php elseif ($isLowStock): ?>
+                                    <span class="badge bg-warning text-dark ms-2" data-bs-toggle="tooltip" title="Low stock! Current quantity is below the threshold of <?php echo $lowStockThreshold; ?>">
+                                        <i class="fas fa-exclamation-triangle me-1"></i> Low Stock
+                                    </span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <?php 
                                     $unitValue = $row['unit_value'] ?? 1;
@@ -108,6 +125,7 @@ include __DIR__ . "/../templates/nav.php";
                                                 data-other-unit-type="<?php echo htmlspecialchars($row['other_unit_type'] ?? ''); ?>"
                                                 data-pieces-per-pack="<?php echo $row['pieces_per_pack'] ?? ''; ?>"
                                                 data-price="<?php echo $row['price_per_unit'] ?? $row['price']; ?>"
+                                                data-low-stock-threshold="<?php echo $lowStockThreshold; ?>"
                                                 data-bs-toggle="tooltip"
                                                 data-bs-placement="top"
                                                 title="Edit product"
@@ -200,11 +218,16 @@ include __DIR__ . "/../templates/nav.php";
                     <div class="border rounded p-3 mb-3">
                         <h6 class="mb-3 pb-1 border-bottom fw-semibold text-uppercase small text-muted">Inventory Details</h6>
                         <div class="row g-3">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label">Stock Quantity</label>
                                 <input type="number" class="form-control" name="quantity" placeholder="Enter quantity" min="0" required>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <label class="form-label">Low Stock Threshold</label>
+                                <input type="number" class="form-control" name="low_stock_threshold" placeholder="e.g., 10" min="0">
+                                <small class="text-muted">Get notified when stock is low</small>
+                            </div>
+                            <div class="col-md-4">
                                 <label class="form-label">Price</label>
                                 <div class="input-group">
                                     <span class="input-group-text">₱</span>
@@ -293,11 +316,16 @@ include __DIR__ . "/../templates/nav.php";
                     <div class="border rounded p-3 mb-3">
                         <h6 class="mb-3 pb-1 border-bottom fw-semibold text-uppercase small text-muted">Inventory Details</h6>
                         <div class="row g-3">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label">Stock Quantity</label>
                                 <input type="number" class="form-control" name="stock_quantity" id="editProductQuantity" min="0" required>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <label class="form-label">Low Stock Threshold</label>
+                                <input type="number" class="form-control" name="low_stock_threshold" id="editLowStockThreshold" min="0">
+                                <small class="text-muted">Get notified when stock is low</small>
+                            </div>
+                            <div class="col-md-4">
                                 <label class="form-label">Price per Unit</label>
                                 <div class="input-group">
                                     <span class="input-group-text">₱</span>
@@ -541,6 +569,7 @@ $(document).ready(function() {
         const productName = $(this).data('name');
         const productQty = $(this).data('quantity');
         const productPrice = $(this).data('price');
+        const lowStockThreshold = $(this).data('low-stock-threshold');
         let unitType = $(this).data('unit-type');
         const unitValue = $(this).data('unit-value');
         const otherUnitType = $(this).data('other-unit-type');
@@ -561,6 +590,7 @@ $(document).ready(function() {
         $('#editProductName').val(productName);
         $('#editProductQuantity').val(productQty);
         $('#editProductPrice').val(productPrice);
+        $('#editLowStockThreshold').val(lowStockThreshold || '');
         
         // Handle unit type and value
         $('#editUnitType').val(unitType);

@@ -31,6 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $unit_value = (float)($_POST['unit_value'] ?? 1);
         $other_unit_type = trim($_POST['other_unit_type'] ?? '');
         $pieces_per_pack = ($unit_type === 'pack' && !empty($_POST['pieces_per_pack'])) ? (int)$_POST['pieces_per_pack'] : null;
+        $low_stock_threshold = !empty($_POST['low_stock_threshold']) ? (int)$_POST['low_stock_threshold'] : null;
 
         // Basic validation
         $errors = [];
@@ -45,6 +46,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         if ($price_per_unit < 0) {
             $errors[] = 'Price cannot be negative';
+        }
+        
+        if ($low_stock_threshold !== null && $low_stock_threshold < 0) {
+            $errors[] = 'Low stock threshold cannot be negative';
         }
         
         if (empty($unit_type)) {
@@ -75,11 +80,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Set product property values
         $product->product_name = $product_name;
         $product->description = $description;
-        $product->stock_quantity = $quantity; // Changed from quantity to stock_quantity
+        $product->stock_quantity = $quantity;
         $product->price_per_unit = $price_per_unit;
         $product->unit_type = $final_unit_type;
         $product->unit_value = $unit_value;
         $product->pieces_per_pack = $pieces_per_pack;
+        $product->low_stock_threshold = $low_stock_threshold;
         
         // If other_unit_type was provided, store it
         if ($unit_type === 'other') {

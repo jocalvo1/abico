@@ -48,6 +48,7 @@ try {
     $unitValue = (float)$_POST['unit_value'];
     $otherUnitType = isset($_POST['other_unit_type']) ? trim($_POST['other_unit_type']) : null;
     $piecesPerPack = ($unitType === 'pack' && isset($_POST['pieces_per_pack'])) ? (int)$_POST['pieces_per_pack'] : null;
+    $lowStockThreshold = !empty($_POST['low_stock_threshold']) ? (int)$_POST['low_stock_threshold'] : null;
     $stockQuantity = (int)$_POST['stock_quantity'];
     $pricePerUnit = (float)$_POST['price_per_unit'];
 
@@ -62,6 +63,10 @@ try {
 
     if ($unitValue <= 0) {
         throw new Exception('Unit value must be greater than 0');
+    }
+
+    if ($lowStockThreshold !== null && $lowStockThreshold < 0) {
+        throw new Exception('Low stock threshold cannot be negative');
     }
 
     if ($stockQuantity < 0) {
@@ -87,12 +92,13 @@ try {
 
     // Update product properties
     $product->product_name = $productName;
+    $product->unit_type = $unitType === 'other' ? $otherUnitType : $unitType;
     $product->unit_value = $unitValue;
-    $product->unit_type = $unitType;
-    $product->other_unit_type = $otherUnitType;
+    $product->other_unit_type = $unitType === 'other' ? $otherUnitType : null;
     $product->pieces_per_pack = $piecesPerPack;
     $product->stock_quantity = $stockQuantity;
     $product->price_per_unit = $pricePerUnit;
+    $product->low_stock_threshold = $lowStockThreshold;
 
     // Get the current product data before update
     $current_product = new Product($db);
