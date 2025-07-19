@@ -106,7 +106,7 @@ include __DIR__ . "/../templates/nav.php";
                                 <div>
                                     <strong>This is a debt transaction</strong>
                                     <div class="d-flex justify-content-between mt-1">
-                                        <span>Remaining Balance:</span>
+                                        <span>Remaining Balance:&nbsp; </span>
                                         <strong>₱<?php echo number_format($remainingBalance, 2); ?></strong>
                                     </div>
                                 </div>

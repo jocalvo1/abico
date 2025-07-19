@@ -13,6 +13,7 @@ class Transaction {
     public $change_amount;
     public $is_debt = false;
     public $remaining_balance = 0.00;
+    public $payment_status = 'unpaid';
     public $created_at;
     public $items = [];
 
@@ -73,6 +74,15 @@ class Transaction {
             // Calculate remaining balance if this is a debt transaction
             $this->remaining_balance = $this->is_debt ? 
                 max(0, $this->total_amount - $this->amount_received) : 0;
+                
+            // Set transaction status
+            if ($this->amount_received >= $this->total_amount) {
+                $this->payment_status = 'paid';
+            } elseif ($this->is_debt && $this->remaining_balance > 0) {
+                $this->payment_status = 'partially_paid';
+            } else {
+                $this->payment_status = 'unpaid';
+            }
 
             // Insert into transactions table
             $query = "INSERT INTO " . $this->table_name . " 
@@ -84,7 +94,8 @@ class Transaction {
                          is_debt = :is_debt,
                          remaining_balance = :remaining_balance,
                          amount_received = :amount_received,
-                         change_amount = :change_amount";
+                         change_amount = :change_amount,
+                         payment_status = :payment_status";
 
             $stmt = $this->conn->prepare($query);
 
@@ -109,6 +120,7 @@ class Transaction {
             $stmt->bindParam(":remaining_balance", $this->remaining_balance);
             $stmt->bindParam(":amount_received", $this->amount_received);
             $stmt->bindParam(":change_amount", $this->change_amount);
+            $stmt->bindParam(":payment_status", $this->payment_status);
 
             // Execute query
             if($stmt->execute()) {

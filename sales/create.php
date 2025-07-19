@@ -640,16 +640,19 @@ $products = $product->readAll();
                 const totalAmount = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
                 const change = amountReceived - totalAmount;
                 const changeAmount = Math.max(0, change);
-                const remainingAmount = Math.max(0, totalAmount - amountReceived);
+                // Calculate remaining amount (0 if paid in full or overpaid)
+                const remainingAmount = amountReceived < totalAmount ? (totalAmount - amountReceived) : 0;
                 
                 $('#changeAmount').text('₱' + changeAmount.toFixed(2));
                 
+                // Always show remaining balance section but set to 0 when paid in full or overpaid
                 if (remainingAmount > 0) {
                     $('#remainingAmount').text('₱' + remainingAmount.toFixed(2));
-                    $('#remainingAmountContainer').show();
                 } else {
-                    $('#remainingAmountContainer').hide();
+                    $('#remainingAmount').text('₱0.00');
                 }
+                // Always show the container but with 0.00 when paid in full
+                $('#remainingAmountContainer').show();
                 
                 // Store the change amount in a data attribute
                 $('#amountReceived').data('change-amount', changeAmount);
