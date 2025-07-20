@@ -186,6 +186,41 @@ include __DIR__ . "/templates/nav.php";
             </div>
         </div>
         
+        <!-- Charts Section -->
+        <div class="row mb-4">
+            <!-- Monthly Sales Chart -->
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-head-row">
+                            <div class="d-flex align-items-center">
+                                <h4 class="card-title me-3">Monthly Sales</h4>
+                                <select class="form-select form-select-sm me-2" id="salesMonthSelector" onchange="console.log('Month changed to:', this.value); loadMonthlySalesChart();" style="width: 150px;">
+                                    <!-- Options will be populated by JavaScript -->
+                                </select>
+                            </div>
+                            <div class="card-tools">
+                                <span class="badge badge-info me-2" id="sales-month">Loading...</span>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-success" onclick="exportToExcel('monthly_sales')" title="Export Monthly Sales">
+                                        <i class="fas fa-file-excel"></i> Export
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-primary" onclick="exportToExcel('all_sales')" title="Export All Transactions">
+                                        <i class="fas fa-list"></i> All Data
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="position: relative; height: 400px;">
+                            <canvas id="monthlySalesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <div class="row">
             <!-- Recent Transactions -->
             <div class="col-md-8">
@@ -305,5 +340,155 @@ include __DIR__ . "/templates/nav.php";
 </div>
 <!--   Core JS Files   -->
 <?php include __DIR__ . "/templates/scripts.php"; ?>
+
+<!-- Dashboard Charts Script -->
+<script>
+$(document).ready(function() {
+    
+    function populateMonthSelectors() {
+        console.log('Populating month selectors...');
+        const currentDate = new Date();
+        const months = [];
+        
+        // Generate last 12 months
+        for (let i = 0; i < 12; i++) {
+            const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+            const monthValue = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
+            const monthText = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+            months.push({ value: monthValue, text: monthText });
+        }
+        
+        // Populate sales selector
+        const salesSelector = $('#salesMonthSelector');
+        
+        months.forEach(month => {
+            salesSelector.append(`<option value="${month.value}">${month.text}</option>`);
+        });
+    }
+    
+    function loadMonthlySalesChart() {
+        const selectedMonth = $('#salesMonthSelector').val() || new Date().toISOString().slice(0, 7);
+        console.log('Loading chart for month:', selectedMonth);
+        
+        // Destroy existing chart if it exists
+        if (window.monthlySalesChartInstance) {
+            window.monthlySalesChartInstance.destroy();
+            window.monthlySalesChartInstance = null;
+        }
+        
+        // Show loading state
+        $('#sales-month').text('Loading...');
+        
+        $.ajax({
+            url: 'api/chart_data.php?type=monthly_sales&month=' + selectedMonth,
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                console.log('Chart data received:', response);
+                $('#sales-month').text(response.month);
+                
+                const ctx = document.getElementById('monthlySalesChart').getContext('2d');
+                window.monthlySalesChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: response.labels,
+                        datasets: [{
+                            label: 'Daily Sales (₱)',
+                            data: response.data,
+                            borderColor: '#177dff',
+                            backgroundColor: 'rgba(23, 125, 255, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '₱' + value.toLocaleString();
+                                    }
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Day of Month'
+                                }
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        }
+                    }
+                });
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading monthly sales chart:', error);
+                console.error('Response:', xhr.responseText);
+                $('#sales-month').text('Error loading data');
+            }
+        });
+    }
+    
+    // Make function globally accessible for the onchange event
+    window.loadMonthlySalesChart = loadMonthlySalesChart;
+    
+    // Initialize month selectors and charts
+    populateMonthSelectors();
+    loadMonthlySalesChart();
+    
+    // Export to Excel function
+    window.exportToExcel = function(type) {
+        // Show loading state
+        const button = event.target.closest('button');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
+        button.disabled = true;
+        
+        // Get selected month from sales selector
+        const selectedMonth = $('#salesMonthSelector').val() || new Date().toISOString().slice(0, 7);
+        
+        // Create a temporary link to download the file
+        const link = document.createElement('a');
+        link.href = 'api/export_excel.php?type=' + type + '&month=' + selectedMonth;
+        link.download = type + '_' + selectedMonth + '.xls';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Reset button state after a short delay
+        setTimeout(function() {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }, 2000);
+        
+        // Show success message
+        $.notify({
+            icon: 'fas fa-file-excel',
+            title: 'Export Successful!',
+            message: 'Your Excel file has been downloaded.'
+        }, {
+            type: 'success',
+            placement: {
+                from: 'top',
+                align: 'right'
+            },
+            time: 3000
+        });
+    };
+});
+</script>
 </body>
 </html>
