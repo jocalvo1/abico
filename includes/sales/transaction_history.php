@@ -48,6 +48,10 @@ class TransactionHistory {
         if (!empty($search)) {
             $searchCond = "WHERE (t.id LIKE :search OR 
                               t.customer_name LIKE :search OR 
+                              t.total_amount LIKE :search OR
+                              DATE_FORMAT(t.created_at, '%Y-%m-%d') LIKE :search OR
+                              DATE_FORMAT(t.created_at, '%M %d, %Y') LIKE :search OR
+                              DATE_FORMAT(t.created_at, '%b %d, %Y') LIKE :search OR
                               t.created_at LIKE :search)";
             $params[':search'] = "%{$search}%";
         }
