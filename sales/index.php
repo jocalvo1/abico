@@ -19,8 +19,10 @@ $db = $database->getConnection();
 
 // Initialize TransactionHistory object
 $transactionHistory = new TransactionHistory($db);
+?>
 
-include __DIR__ . "/../templates/header.php";
+<?php include __DIR__ . "/../templates/header.php"; ?>
+<?php 
 include __DIR__ . "/../templates/sidebar.php";
 include __DIR__ . "/../templates/nav.php";
 ?>
@@ -47,7 +49,7 @@ include __DIR__ . "/../templates/nav.php";
       </div>
       <div class="card-body">
         <div class="table-responsive">
-            <table id="salesTable" class="table table-hover table-striped" style="width:100%">
+            <table id="salesTable" class="table table-hover" style="width:100%">
                 <thead>
                     <tr>
                         <th>#</th>
@@ -61,96 +63,6 @@ include __DIR__ . "/../templates/nav.php";
                 <tbody>
                 </tbody>
             </table>
-            <script>
-                $(document).ready(function() {
-                    // Initialize tooltips
-                    $('[data-bs-toggle="tooltip"]').tooltip();
-                    
-                    // Initialize DataTable
-                    var table = $('#salesTable').DataTable({
-                        "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
-                        "processing": true,
-                        "serverSide": true,
-                        "ajax": {
-                            "url": "../includes/sales/transaction_history.php",
-                            "type": "POST",
-                            "data": function (d) {
-                                // Add any additional parameters if needed
-                                return d;
-                            },
-                            "error": function(xhr, error, thrown) {
-                                console.error('DataTables AJAX Error:', error, thrown);
-                                console.error('Response:', xhr.responseText);
-                            }
-                        },
-                        "columns": [
-                            { 
-                                "data": "id",
-                                "orderable": true
-                            },
-                            { 
-                                "data": "created_at",
-                                "orderable": true,
-                                "render": function(data) {
-                                    const date = new Date(data);
-                                    return date.toLocaleDateString('en-US', {
-                                        month: 'short',
-                                        day: '2-digit',
-                                        year: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        hour12: true
-                                    });
-                                }
-                            },
-                            { 
-                                "data": "customer_name",
-                                "orderable": true
-                            },
-                            { 
-                                "data": "item_count",
-                                "orderable": true
-                            },
-                            { 
-                                "data": "total_amount",
-                                "orderable": true,
-                                "render": function(data) {
-                                    const amount = parseFloat(data);
-                                    return '₱' + (isNaN(amount) ? '0.00' : amount.toFixed(2));
-                                }
-                            },
-                            { 
-                                "data": "id",
-                                "orderable": false,
-                                "className": "text-center",
-                                "render": function(data) {
-                                    return '<a href="view.php?id=' + data + '" ' +
-                                           'class="btn btn-sm btn-outline-primary px-3 py-1" ' +
-                                           'title="View transaction details" ' +
-                                           'data-bs-toggle="tooltip" ' +
-                                           'data-bs-placement="top">' +
-                                           '<i class="fas fa-eye me-1"></i>View</a>';
-                                }
-                            }
-                        ],
-                        "pageLength": 5,
-                        "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
-                        "language": {
-                            "search": "Search:",
-                            "lengthMenu": "Show _MENU_ entries",
-                            "info": "Showing page _PAGE_ of _PAGES_",
-                            "infoEmpty": "No entries found",
-                            "infoFiltered": "(filtered from _MAX_ total entries)"
-                        },
-                        "order": [[0, "desc"]], // Order by ID descending
-                        "initComplete": function() {
-                            console.log('DataTables initialized successfully');
-                            // Re-initialize tooltips after table is loaded
-                            $('[data-bs-toggle="tooltip"]').tooltip();
-                        }
-                    });
-                });
-            </script>
         </div>
       </div>
     </div>
@@ -158,9 +70,283 @@ include __DIR__ . "/../templates/nav.php";
   </div>
 </div>
 <?php include __DIR__ . "/../templates/footer.php"; ?>
-</div>
-</div>
-<!--   Core JS Files   -->
+
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+
+<!-- Custom scripts -->
+<script>
+$(document).ready(function() {
+    // Initialize tooltips
+    const initTooltips = () => {
+        $('[data-bs-toggle="tooltip"]').tooltip();
+    };
+    
+    // Format date for display
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+    };
+    
+    // Format currency
+    const formatCurrency = (amount) => {
+        const value = parseFloat(amount);
+        return '₱' + (isNaN(value) ? '0.00' : value.toFixed(2));
+    };
+    
+    // Initialize DataTable with enhanced configuration
+    const initDataTable = () => {
+        // Destroy existing DataTable instance if it exists
+        if ($.fn.DataTable.isDataTable('#salesTable')) {
+            $('#salesTable').DataTable().destroy();
+        }
+
+        const table = $('#salesTable').DataTable({
+            // Basic configuration
+            processing: true,
+            serverSide: true,
+            responsive: true,
+            autoWidth: false,
+            stateSave: true, // Save state (pagination, search, etc.)
+            stateDuration: 60 * 60 * 24, // 24 hours
+            order: [[1, 'desc']], // Sort by created_at (index 1) in descending order
+            pageLength: 10,
+            lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
+            
+            // Language configuration
+            language: {
+                processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
+                search: '',
+                searchPlaceholder: 'Search transactions...',
+                lengthMenu: 'Show _MENU_ entries',
+                info: 'Showing _START_ to _END_ of _TOTAL_ entries',
+                infoEmpty: 'No entries found',
+                infoFiltered: '(filtered from _MAX_ total entries)',
+                paginate: {
+                    first: '<i class="fas fa-angle-double-left"></i>',
+                    last: '<i class="fas fa-angle-double-right"></i>',
+                    next: '<i class="fas fa-chevron-right"></i>',
+                    previous: '<i class="fas fa-chevron-left"></i>'
+                }
+            },
+            
+            // DOM layout configuration
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                 '<"row"<"col-sm-12"tr>>' +
+                 '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            
+            // AJAX configuration with enhanced error handling
+            ajax: {
+                url: "../includes/sales/transaction_history.php",
+                type: "POST",
+                data: (d) => {
+                    // Add any additional data you want to send with each request
+                    return d;
+                },
+                dataSrc: function(json) {
+                    if (json.error) {
+                        console.error('Server error:', json.error);
+                        return [];
+                    }
+                    return json.data || [];
+                },
+                error: (xhr, error, thrown) => {
+                    console.error('DataTables AJAX Error:', error, thrown);
+                    console.error('Response:', xhr.responseText);
+                    
+                    // Show error message to user
+                    let errorMsg = 'Failed to load data. ';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMsg = xhr.responseJSON.error;
+                    } else if (xhr.status === 0) {
+                        errorMsg = 'Network error. Please check your connection.';
+                    } else {
+                        errorMsg = 'Failed to load transaction data. Please try again.';
+                    }
+                    
+                    // Show error in console
+                    console.error('DataTables error:', errorMsg);
+                    
+                    // Show error to user using SweetAlert if available
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: errorMsg
+                        });
+                    }
+                    
+                    // Clear and redraw the table
+                    const table = $('#salesTable').DataTable();
+                    table.clear().draw();
+                }
+            },
+            
+            // Column definitions
+            columns: [
+                { 
+                    data: null,
+                    orderable: false,
+                    className: 'text-center',
+                    width: '60px',
+                    render: function(data, type, row, meta) {
+                        return meta.settings._iDisplayStart + meta.row + 1;
+                    }
+                },
+                { 
+                    data: 'created_at',
+                    orderable: true,
+                    width: '150px',
+                    type: 'date',
+                    render: function(data, type, row) {
+                        if (type === 'sort' || type === 'type') {
+                            return data; // Return raw data for sorting
+                        }
+                        return formatDate(data);
+                    }
+                },
+                { 
+                    data: 'customer_name',
+                    orderable: true,
+                    width: '25%'
+                },
+                { 
+                    data: 'item_count',
+                    orderable: true,
+                    className: 'text-center',
+                    width: '80px'
+                },
+                { 
+                    data: 'total_amount',
+                    orderable: true,
+                    className: 'text-end',
+                    width: '120px',
+                    render: formatCurrency
+                },
+                { 
+                    data: 'id',
+                    orderable: false,
+                    searchable: false,
+                    className: 'text-center',
+                    width: '100px',
+                    render: function(data, type, row) {
+                        return `
+                            <a href="view.php?id=${data}" 
+                               class="btn btn-sm btn-outline-primary view-transaction"
+                               title="View transaction details"
+                               data-bs-toggle="tooltip"
+                               data-bs-placement="top">
+                                <i class="fas fa-eye me-1"></i>View
+                            </a>
+                        `;
+                    }
+                }
+            ],
+            
+            // Language configuration
+            language: {
+                search: '_INPUT_',
+                searchPlaceholder: 'Search transactions...',
+                lengthMenu: 'Show _MENU_ entries',
+                info: 'Showing _START_ to _END_ of _TOTAL_ entries',
+                infoEmpty: 'No entries found',
+                infoFiltered: '(filtered from _MAX_ total entries)',
+                zeroRecords: 'No matching records found',
+                paginate: {
+                    first: 'First',
+                    last: 'Last',
+                    next: 'Next',
+                    previous: 'Previous'
+                }
+            },
+            
+            // DOM layout
+            dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                 "<'row'<'col-sm-12'tr>>" +
+                 "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            
+            // Callbacks
+            initComplete: function() {
+                // Style DataTable elements
+                $('.dataTables_filter input')
+                    .addClass('form-control mb-3')
+                    .attr('placeholder', 'Search transactions...');
+                    
+                $('.dataTables_length select')
+                    .addClass('form-select mb-3');
+                
+                // Style pagination
+                $('.dataTables_paginate')
+                    .addClass('mt-3');
+                
+                // Make table header sticky on scroll
+                $('.dataTables_scrollHead')
+                    .css('position', 'sticky')
+                    .css('top', '0')
+                    .css('z-index', '5');
+                
+                // Add hover effect to view buttons
+                $('.view-transaction')
+                    .on('mouseenter', function() {
+                        $(this).addClass('btn-primary').removeClass('btn-outline-primary');
+                    })
+                    .on('mouseleave', function() {
+                        $(this).removeClass('btn-primary').addClass('btn-outline-primary');
+                    });
+                
+                initTooltips();
+                console.log('Sales DataTable initialized successfully');
+            },
+            
+            drawCallback: function() {
+                initTooltips();
+                
+                // Re-attach hover effects after table redraw
+                $('.view-transaction')
+                    .off('mouseenter mouseleave')
+                    .on('mouseenter', function() {
+                        $(this).addClass('btn-primary').removeClass('btn-outline-primary');
+                    })
+                    .on('mouseleave', function() {
+                        $(this).removeClass('btn-primary').addClass('btn-outline-primary');
+                    });
+            }
+        });
+        
+        return table;
+    };
+    
+    // Initialize everything when document is ready
+    $(() => {
+        console.log('Document ready, initializing DataTable...');
+        initTooltips();
+        try {
+            const salesTable = initDataTable();
+            console.log('DataTable initialized:', salesTable);
+        } catch (error) {
+            console.error('Error initializing DataTable:', error);
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Initialization Error',
+                    text: 'Failed to initialize the data table. Please check console for details.'
+                });
+            }
+        }
+    });
+});
+</script>
+
 <?php include __DIR__ . "/../templates/scripts.php"; ?>
 </body>
 </html>

@@ -66,12 +66,19 @@ $base = "/ABICO";
                 <p>Ledger</p>
               </a>
             </li>
-            <li class="nav-item">
-              <a href="javascript:void(0)" class="text-danger" id="logoutBtn">
-                <i class="fa-solid fa-power-off"></i>
-                <p>Logout</p>
-              </a>
-            </li>
+          </ul>
+          
+          <!-- Bottom-aligned logout button -->
+          <div class="sidebar-bottom">
+            <ul class="nav nav-secondary">
+              <li class="nav-item">
+                <a href="javascript:void(0)" id="logoutBtn">
+                  <i class="fa-solid fa-power-off"></i>
+                  <p>Logout</p>
+                </a>
+              </li>
+            </ul>
+          </div>
           </ul>
         </div>
       </div>

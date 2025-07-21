@@ -259,7 +259,7 @@ include __DIR__ . "/templates/nav.php";
                                                 <td>₱<?php echo number_format($transaction['total_amount'], 2); ?></td>
                                                 <td>
                                                     <span class="badge badge-<?php echo $transaction['payment_status'] === 'paid' ? 'success' : 'warning'; ?>">
-                                                        <?php echo ucfirst($transaction['payment_status']); ?>
+                                                        <?php echo $transaction['payment_status'] === 'paid' ? 'Paid' : 'Unpaid'; ?>
                                                     </span>
                                                 </td>
                                                 <td><?php echo date('M d, Y h:i A', strtotime($transaction['created_at'])); ?></td>

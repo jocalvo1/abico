@@ -779,7 +779,21 @@ $products = $product->readAll();
                                 ? `Transaction recorded as debt. Remaining balance: ₱${paymentData.remaining_balance.toFixed(2)} has been added to the customer's account.`
                                 : 'The transaction has been completed successfully.';
                             
-                            // Show success message
+                            // Store receipt data for printing
+                            const receiptData = {
+                                id: response.transaction_id || response.invoice_number,
+                                created_at: response.transaction_date || new Date().toISOString(),
+                                customer_name: paymentData.customer_name || 'Walk-in Customer',
+                                items: paymentData.items,
+                                total_amount: paymentData.total_amount,
+                                payment_method: paymentData.payment_method,
+                                amount_received: paymentData.amount_received || 0,
+                                change_amount: paymentData.change_amount || 0,
+                                is_debt: isDebt,
+                                remaining_balance: paymentData.remaining_balance || 0
+                            };
+
+                            // Show success message with print option
                             Swal.fire({
                                 title: isDebt ? 'Debt Recorded!' : 'Payment Successful!',
                                 html: successMessage,
@@ -789,13 +803,12 @@ $products = $product->readAll();
                                 cancelButtonText: 'Close',
                                 allowOutsideClick: false,
                                 didOpen: () => {
-                                    // Focus the print button for better UX
                                     document.querySelector('.swal2-confirm').focus();
                                 }
                             }).then((result) => {
                                 if (result.isConfirmed) {
-                                    // Open print receipt in new tab
-                                    window.open('receipt.php?invoice=' + response.invoice_number, '_blank');
+                                    // Print the receipt
+                                    printReceipt(receiptData);
                                 }
                                 
                                 // Reset the form and cart
@@ -1034,6 +1047,142 @@ $products = $product->readAll();
             updateCart();
         });
     </script>
-    
+
+    <script>
+    function printReceipt(receiptData) {
+        // Format the receipt HTML
+        const receiptHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Receipt #${receiptData.id}</title>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    body {
+                        font-family: 'Courier New', monospace;
+                        font-size: 12px;
+                        line-height: 1.2;
+                        color: #000;
+                        background: #fff;
+                        margin: 0;
+                        padding: 5mm;
+                    }
+                    .receipt-container {
+                        max-width: 80mm;
+                        margin: 0 auto;
+                    }
+                    .receipt-header {
+                        text-align: center;
+                        margin-bottom: 1rem;
+                    }
+                    .receipt-header h2 {
+                        margin: 0.5rem 0;
+                        font-size: 1.2rem;
+                        font-weight: bold;
+                    }
+                    .receipt-header p {
+                        margin: 0.2rem 0;
+                    }
+                    .receipt-items {
+                        width: 100%;
+                        margin: 0.5rem 0;
+                    }
+                    .receipt-items table {
+                        width: 100%;
+                        border-collapse: collapse;
+                    }
+                    .receipt-items td {
+                        padding: 0.1rem 0;
+                    }
+                    .text-center { text-align: center; }
+                    .text-end { text-align: right; }
+                    .fw-bold { font-weight: bold; }
+                    .border-top { border-top: 1px dashed #000; }
+                    .border-bottom { border-bottom: 1px dashed #000; }
+                    .py-1 { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
+                    .my-1 { margin-top: 0.25rem !important; margin-bottom: 0.25rem !important; }
+                    .d-flex { display: flex; }
+                    .justify-content-between { justify-content: space-between; }
+                </style>
+            </head>
+            <body onload="window.print(); window.onafterprint = function() { window.close(); };">
+                <div class="receipt-container">
+                    <div class="receipt-header">
+                        <h2>ABICO STORE</h2>
+                        <p>123 Store Street, City</p>
+                        <p>Tel: (123) 456-7890</p>
+                        <p>TIN: 123-456-789-000</p>
+                        <p>S/N: ${String(receiptData.id).padStart(5, '0')}</p>
+                        <p>${new Date(receiptData.created_at).toLocaleString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}</p>
+                        <p>--------------------------</p>
+                    </div>
+                    
+                    <div class="receipt-items">
+                        <table>
+                            <tbody>
+                                ${receiptData.items.map(item => `
+                                    <tr>
+                                        <td>${item.name}</td>
+                                        <td class="text-end">${item.quantity} x ₱${parseFloat(item.price).toFixed(2)}</td>
+                                        <td class="text-end">₱${(item.quantity * item.price).toFixed(2)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        
+                        <div class="border-top py-1">
+                            <div class="d-flex justify-content-between">
+                                <span>Subtotal:</span>
+                                <span>₱${parseFloat(receiptData.total_amount).toFixed(2)}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Payment Method:</span>
+                                <span>${receiptData.payment_method}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Amount Paid:</span>
+                                <span>₱${parseFloat(receiptData.amount_received).toFixed(2)}</span>
+                            </div>
+                            ${receiptData.change_amount > 0 ? `
+                                <div class="d-flex justify-content-between">
+                                    <span>Change:</span>
+                                    <span>₱${parseFloat(receiptData.change_amount).toFixed(2)}</span>
+                                </div>
+                            ` : ''}
+                            ${receiptData.is_debt && receiptData.remaining_balance > 0 ? `
+                                <div class="d-flex justify-content-between fw-bold">
+                                    <span>Balance Due:</span>
+                                    <span>₱${parseFloat(receiptData.remaining_balance).toFixed(2)}</span>
+                                </div>
+                            ` : ''}
+                            <div class="d-flex justify-content-between fw-bold border-top my-1 pt-1">
+                                <span>TOTAL:</span>
+                                <span>₱${parseFloat(receiptData.total_amount).toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <p class="mb-1">Thank you for shopping with us!</p>
+                        <p class="mb-1">This receipt serves as your official invoice</p>
+                        <p>--------------------------</p>
+                        <p class="small">For inquiries, please contact us at:</p>
+                        <p class="small mb-0">Email: info@abicostore.com</p>
+                        <p class="small">Phone: (123) 456-7890</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+
+        // Open a new window for printing with larger dimensions
+        const printWindow = window.open('', '', 'width=800,height=900,top=50,left=50,resizable=yes,scrollbars=yes');
+        
+        // Write the receipt content to the new window
+        printWindow.document.write(receiptHtml);
+        printWindow.document.close();
+    }
+    </script>
 </body>
 </html>
