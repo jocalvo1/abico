@@ -27,15 +27,8 @@ $db = $database->getConnection();
 // Initialize SalesActivityLog object
 $activityLog = new SalesActivityLog($db);
 
-// Get pagination parameters
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$perPage = 20;
-$offset = ($page - 1) * $perPage;
-
-// Get logs and total count
-$logs = $activityLog->readAll($page, $perPage);
-$totalLogs = $activityLog->countAll();
-$totalPages = ceil($totalLogs / $perPage);
+// Get all logs for DataTable
+$logs = $activityLog->readAll();
 
 // Include template header and sidebar
 include __DIR__ . '/../templates/header.php';
@@ -58,12 +51,13 @@ include __DIR__ . '/../templates/nav.php';
                     </div>
                 </h4>
                 <div class="text-muted">
-                    Showing <?= $offset + 1 ?> - <?= min($offset + count($logs), $totalLogs) ?> of <?= $totalLogs ?> entries
+                    <?= count($logs) ?> total entries
                 </div>
+
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table id="activityTable" class="table table-hover table-striped" style="width:100%">
+                    <table id="activityTable" class="table table-hover" style="width:100%">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -74,12 +68,11 @@ include __DIR__ . '/../templates/nav.php';
                         </thead>
                         <tbody>
                         <?php foreach ($logs as $index => $row): 
-                            $rowNumber = $offset + $index + 1;
                             $description = $activityLog->formatDescription($row);
                             $timeAgo = $activityLog->timeElapsedString($row['created_at']);
                         ?>
                         <tr>
-                            <td><?= $rowNumber ?></td>
+                            <td><?= $index + 1 ?></td>
                             <td><?= htmlspecialchars($row['customer_name']) ?></td>
                             <td><?= htmlspecialchars($description) ?></td>
                             <td class="text-muted">
@@ -94,34 +87,7 @@ include __DIR__ . '/../templates/nav.php';
                     </table>
                 </div>
 
-                <!-- Pagination -->
-                <?php if ($totalPages > 1): ?>
-                <nav aria-label="Page navigation">
-                    <ul class="pagination justify-content-center mt-4">
-                        <?php if ($page > 1): ?>
-                        <li class="page-item">
-                            <a class="page-link" href="?page=<?= $page - 1 ?>" aria-label="Previous">
-                                <span aria-hidden="true">&laquo;</span>
-                            </a>
-                        </li>
-                        <?php endif; ?>
 
-                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                            <li class="page-item <?= $i == $page ? 'active' : '' ?>">
-                                <a class="page-link" href="?page=<?= $i ?>"><?= $i ?></a>
-                            </li>
-                        <?php endfor; ?>
-
-                        <?php if ($page < $totalPages): ?>
-                        <li class="page-item">
-                            <a class="page-link" href="?page=<?= $page + 1 ?>" aria-label="Next">
-                                <span aria-hidden="true">&raquo;</span>
-                            </a>
-                        </li>
-                        <?php endif; ?>
-                    </ul>
-                </nav>
-                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -130,35 +96,133 @@ include __DIR__ . '/../templates/nav.php';
 <?php include __DIR__ . "/../templates/footer.php"; ?>
 <?php include __DIR__ . "/../templates/scripts.php"; ?>
 
-<!-- Add DataTables and jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<!-- Custom DataTables CSS -->
+<link rel="stylesheet" href="/ABICO/assets/css/datatables.css">
+
+<!-- DataTables JS -->
 <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
 $(document).ready(function() {
-    // Initialize DataTable with custom settings
-    $('#activityTable').DataTable({
-        "pageLength": 5,
-        "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
-        "order": [[3, 'desc']], // Default sort by Date & Time descending
-        "language": {
-            "search": "Search:",
-            "searchPlaceholder": "Search by customer name, description...",
-            "lengthMenu": "Show _MENU_ entries",
-            "info": "Showing _START_ to _END_ of _TOTAL_ entries",
-            "infoEmpty": "No entries found",
-            "infoFiltered": "(filtered from _MAX_ total entries)",
-            "paginate": {
-                "first": "First",
-                "last": "Last",
-                "next": "Next",
-                "previous": "Previous"
+    try {
+        // Initialize DataTable with enhanced configuration
+        const activityTable = $('#activityTable').DataTable({
+            responsive: true,
+            autoWidth: false,
+            order: [[2, 'desc']], // Sort by date descending
+            stateSave: true, // Save state (pagination, search, etc.)
+            stateDuration: 60 * 60 * 24, // 24 hours
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+            dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                 "<'row'<'col-sm-12'tr>>" +
+                 "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            language: {
+                lengthMenu: "Show _MENU_ entries",
+                search: "",
+                searchPlaceholder: "Search...",
+                paginate: {
+                    first: '«',
+                    previous: '‹',
+                    next: '›',
+                    last: '»'
+                },
+                info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                infoEmpty: "No entries found",
+                infoFiltered: "(filtered from _MAX_ total entries)",
+                emptyTable: "No data available in table",
+                zeroRecords: "No matching records found"
+            },
+            serverSide: false,
+            deferRender: true,
+            pageLength: 10,
+            lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
+            
+            // Column definitions
+            columnDefs: [
+                {
+                    targets: 0, // # column
+                    orderable: false,
+                    className: 'text-center',
+                    width: '60px'
+                },
+                { 
+                    targets: 1, // Customer column
+                    width: '20%'
+                },
+                {
+                    targets: 3, // Date column
+                    className: 'text-nowrap',
+                    width: '180px',
+                    type: 'date',
+                    render: function(data, type, row) {
+                        if (type === 'sort' || type === 'type') {
+                            return new Date(data).getTime();
+                        }
+                        return data;
+                    }
+                }
+            ],
+            
+            // Language configuration
+            language: {
+                processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
+                search: '',
+                searchPlaceholder: 'Search logs...',
+                lengthMenu: 'Show _MENU_ entries',
+                info: 'Showing _START_ to _END_ of _TOTAL_ entries',
+                infoEmpty: 'No entries found',
+                infoFiltered: '(filtered from _MAX_ total entries)',
+                paginate: {
+                    first: '<i class="fas fa-angle-double-left"></i>',
+                    last: '<i class="fas fa-angle-double-right"></i>',
+                    next: '<i class="fas fa-chevron-right"></i>',
+                    previous: '<i class="fas fa-chevron-left"></i>'
+                }
+            },
+            
+            // DOM layout configuration
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                 '<"row"<"col-sm-12"tr>>' +
+                 '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            
+            // Draw callback for additional styling
+            drawCallback: function() {
+                // Re-initialize tooltips if needed
+                if (typeof $('[data-bs-toggle="tooltip"]').tooltip === 'function') {
+                    $('[data-bs-toggle="tooltip"]').tooltip();
+                }
+                
+                console.log('Sales activity log table redrawn');
+            },
+            
+            // Error handling
+            error: function(xhr, error, thrown) {
+                console.error('DataTables error:', error, thrown);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to load activity log. Please refresh the page.'
+                    });
+                }
             }
-        },
-        "dom": "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
-               "<'row'<'col-sm-12'tr>>" +
-               "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
-    });
+        });
+        
+        console.log('Sales activity log table initialized');
+        
+    } catch (error) {
+        console.error('Error initializing sales activity log table:', error);
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Initialization Error',
+                text: 'Failed to initialize the activity log. Please check console for details.'
+            });
+        }
+    }
 });
 </script>

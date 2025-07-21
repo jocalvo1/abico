@@ -54,7 +54,7 @@ include __DIR__ . "/../templates/nav.php";
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table id="inventoryTable" class="table table-hover table-striped" style="width:100%">
+                    <table id="inventoryTable" class="table table-hover" style="width:100%">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -157,17 +157,20 @@ include __DIR__ . "/../templates/nav.php";
 
 <!-- Add Product Modal -->
 <div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title fw-semibold">Add New Product</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title d-flex align-items-center">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Add New Product
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="/abico/includes/inventory/add_product.php" method="POST">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label small fw-medium">Product Name</label>
-                        <input type="text" class="form-control form-control-sm" name="product_name" placeholder="e.g., Premium White Sugar" required>
+                        <label class="form-label fw-medium">Product Name</label>
+                        <input type="text" class="form-control" name="product_name" placeholder="Enter product name" required>
                     </div>
                     <div class="border rounded p-3 mb-3">
                         <h6 class="mb-3 pb-1 border-bottom fw-semibold text-uppercase small text-muted">Unit Details</h6>
@@ -237,11 +240,11 @@ include __DIR__ . "/../templates/nav.php";
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light py-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">
+                <div class="modal-footer bg-light py-3">
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-4" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i> Cancel
                     </button>
-                    <button type="submit" class="btn btn-sm btn-primary px-3">
+                    <button type="submit" class="btn btn-primary btn-sm px-4">
                         <i class="fas fa-save me-1"></i> Save
                     </button>
                 </div>
@@ -252,11 +255,14 @@ include __DIR__ . "/../templates/nav.php";
 
 <!-- Edit Product Modal -->
 <div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Product</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title d-flex align-items-center">
+                    <i class="fas fa-edit me-2"></i>
+                    Edit Product
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="editProductForm" action="/abico/includes/inventory/update_product.php" method="POST">
                 <input type="hidden" name="id" id="editProductId">
@@ -335,12 +341,12 @@ include __DIR__ . "/../templates/nav.php";
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light py-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i> Close
+                <div class="modal-footer bg-light py-3">
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-4" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> Cancel
                     </button>
-                    <button type="submit" class="btn btn-sm btn-primary px-3" id="updateProductBtn">
-                        <i class="fas fa-save me-1"></i> Update Product
+                    <button type="submit" class="btn btn-primary btn-sm px-4" id="updateProductBtn">
+                        <i class="fas fa-save me-1"></i> Save Changes
                     </button>
                 </div>
             </form>

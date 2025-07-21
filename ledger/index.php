@@ -204,7 +204,7 @@ include __DIR__ . "/../templates/nav.php";
                 
                 <!-- Customers Table -->
                 <div class="table-responsive">
-                    <table id="customerTable" class="table table-striped table-hover w-100">
+                    <table id="customerTable" class="table table-hover w-100">
                         <thead class="table-light">
                             <tr>
                                 <th>#</th>
@@ -305,16 +305,16 @@ include __DIR__ . "/../templates/nav.php";
                     <div>Click 'Update Debt' to modify the customer's balance.</div>
                 </div>
             </div>
-            <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i> Close
+            <div class="modal-footer bg-light py-3">
+                <button type="button" class="btn btn-outline-secondary btn-sm px-4" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Cancel
                 </button>
                 <a href="customer_history.php?id=<?php echo $row['id']; ?>" 
-                   class="btn btn-outline-info view-history-btn"
+                   class="btn btn-outline-info btn-sm view-history-btn"
                    title="View transaction history">
                     <i class="fas fa-history me-1"></i> History
                 </a>
-                <button type="button" class="btn btn-primary edit-debt-btn" data-bs-toggle="modal" data-bs-target="#updateDebtModal">
+                <button type="button" class="btn btn-primary btn-sm edit-debt-btn" data-bs-toggle="modal" data-bs-target="#updateDebtModal">
                     <i class="fas fa-edit me-1"></i> Update Debt
                 </button>
             </div>
@@ -382,12 +382,12 @@ include __DIR__ . "/../templates/nav.php";
                 </div>
                 <div class="modal-footer bg-light p-4 border-top">
                     <button type="button" 
-                            class="btn btn-outline-secondary px-4" 
+                            class="btn btn-outline-secondary btn-sm px-4" 
                             data-bs-dismiss="modal">
                         <i class="fas fa-times me-2"></i>Cancel
                     </button>
                     <button type="submit" 
-                            class="btn btn-primary px-4"
+                            class="btn btn-primary btn-sm px-4"
                             id="saveCustomerBtn">
                         <i class="fas fa-save me-2"></i>Save Customer
                     </button>
@@ -465,17 +465,17 @@ include __DIR__ . "/../templates/nav.php";
                         <textarea class="form-control" id="debt_notes" name="debt_notes" rows="2" placeholder="Add a note about this update (e.g., 'Partial payment for order #123')"></textarea>
                         <small class="form-text text-muted">Add any relevant information about this debt update</small>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer bg-light py-3">
                         <button type="button" 
-                                class="btn btn-secondary" 
+                                class="btn btn-outline-secondary btn-sm px-4" 
                                 data-bs-dismiss="modal"
                                 title="Close without saving changes">
-                            <i class="fas fa-times me-1"></i>Close
+                            <i class="fas fa-times me-1"></i> Cancel
                         </button>
                         <button type="submit" 
-                                class="btn btn-primary"
+                                class="btn btn-primary btn-sm px-4"
                                 title="Save the debt update">
-                            <i class="fas fa-save me-1"></i>Update Debt
+                            <i class="fas fa-save me-1"></i> Update Debt
                         </button>
                     </div>
                 </div>
@@ -646,9 +646,9 @@ include __DIR__ . "/../templates/nav.php";
                 }
             ],
             language: {
-                search: "",
+                search: "_INPUT_",
                 searchPlaceholder: "Search customers...",
-                lengthMenu: "_MENU_ entries per page",
+                lengthMenu: "Show _MENU_ entries",
                 info: "Showing _START_ to _END_ of _TOTAL_ entries",
                 infoEmpty: "No entries found",
                 infoFiltered: "(filtered from _MAX_ total entries)",
@@ -662,9 +662,9 @@ include __DIR__ . "/../templates/nav.php";
             },
             dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
                  "<'row'<'col-sm-12'tr>>" +
-                 "<'row mt-3'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                 "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
             pageLength: 10,
-            lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]]
+            lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]]
         });
         
         // Add custom search input

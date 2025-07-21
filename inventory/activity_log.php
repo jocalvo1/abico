@@ -53,12 +53,12 @@ include __DIR__ . "/../templates/nav.php";
                     </div>
                 </h4>
                 <div class="text-muted">
-                    Showing <?= $offset + 1 ?> - <?= min($offset + count($logs), $totalLogs) ?> of <?= $totalLogs ?> entries
+                    <?= $totalLogs ?> total entries
                 </div>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table id="activityTable" class="table table-hover table-striped" style="width:100%">
+                    <table id="activityTable" class="table table-hover" style="width:100%">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -128,56 +128,109 @@ include __DIR__ . "/../templates/nav.php";
 
 <!-- DataTables CSS -->
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<!-- Custom DataTables CSS -->
+<link rel="stylesheet" href="/ABICO/assets/css/datatables.css">
 
 <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
 $(document).ready(function() {
-    // Initialize DataTable with pagination
-    $('#activityTable').DataTable({
-        responsive: true,
-        order: [[2, 'desc']], // Sort by date descending
-        columnDefs: [
-            {
-                targets: 0, // # column
-                orderable: false,
-                className: 'text-center'
+    try {
+        // Initialize DataTable with enhanced configuration
+        const activityTable = $('#activityTable').DataTable({
+            responsive: true,
+            autoWidth: false,
+            order: [[2, 'desc']], // Sort by date descending
+            stateSave: true, // Save state (pagination, search, etc.)
+            stateDuration: 60 * 60 * 24, // 24 hours
+            pageLength: 10,
+            lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
+            
+            // Language configuration
+            language: {
+                processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
+                search: '',
+                searchPlaceholder: 'Search logs...',
+                lengthMenu: 'Show _MENU_ entries',
+                info: 'Showing _START_ to _END_ of _TOTAL_ entries',
+                infoEmpty: 'No entries found',
+                infoFiltered: '(filtered from _MAX_ total entries)',
+                paginate: {
+                    first: '<i class="fas fa-angle-double-left"></i>',
+                    last: '<i class="fas fa-angle-double-right"></i>',
+                    next: '<i class="fas fa-chevron-right"></i>',
+                    previous: '<i class="fas fa-chevron-left"></i>'
+                }
             },
-            {
-                targets: 2, // Date column
-                className: 'text-nowrap'
+            
+            // DOM layout configuration
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                 '<"row"<"col-sm-12"tr>>' +
+                 '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            
+            // Column definitions
+            columnDefs: [
+                {
+                    targets: 0, // # column
+                    orderable: false,
+                    className: 'text-center',
+                    width: '60px'
+                },
+                {
+                    targets: 2, // Date column
+                    className: 'text-nowrap',
+                    width: '180px'
+                }
+            ],
+            
+            // Draw callback for additional styling
+            drawCallback: function() {
+                // Reinitialize tooltips
+                $('[data-bs-toggle="tooltip"]').tooltip();
+                
+                // Style the pagination controls
+                const paginateButtons = $('.dataTables_paginate .paginate_button');
+                paginateButtons.removeClass('btn-sm btn-primary');
+                paginateButtons.filter('.current').addClass('active');
+                
+                // Ensure search and length controls are properly aligned
+                $('.dataTables_length select').css({
+                    'min-width': '80px',
+                    'padding-right': '30px'
+                });
+                
+                $('.dataTables_filter input').css({
+                    'min-width': '200px',
+                    'max-width': '350px'
+                });
+            },
+            
+            // Error handling
+            error: function(xhr, error, thrown) {
+                console.error('DataTables error:', error, thrown);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to load activity log. Please refresh the page.'
+                    });
+                }
             }
-        ],
-        language: {
-            search: "_INPUT_",
-            searchPlaceholder: "Search logs...",
-            lengthMenu: "Show _MENU_ entries",
-            info: "Showing _START_ to _END_ of _TOTAL_ entries",
-            infoEmpty: "No entries found",
-            infoFiltered: "(filtered from _MAX_ total entries)",
-            paginate: {
-                first: "First",
-                last: "Last",
-                next: "Next",
-                previous: "Previous"
-            }
-        },
-        dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
-             "<'row'<'col-sm-12'tr>>" +
-             "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
-        pageLength: 10,  
-        lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]]
-    });
-    
-    // Add custom search input
-    $('.dataTables_filter input').addClass('form-control mb-3');
-    
-    // Add custom length menu
-    $('.dataTables_length select').addClass('form-select mb-3');
-    
-    // Style pagination
-    $('.dataTables_paginate').addClass('mt-3');
+        });
+        
+        console.log('Activity log table initialized');
+        
+    } catch (error) {
+        console.error('Error initializing activity log table:', error);
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Initialization Error',
+                text: 'Failed to initialize the activity log. Please check console for details.'
+            });
+        }
+    }
 });
 </script>
 

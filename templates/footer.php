@@ -5,3 +5,6 @@
       </div>
     </div>
   </footer>
+  
+  <!-- Sidebar Active State Script -->
+  <script src="/abico/assets/js/sidebar.js"></script>
