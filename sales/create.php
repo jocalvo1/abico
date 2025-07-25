@@ -1110,7 +1110,7 @@ $products = $product->readAll();
                 <div class="receipt-container">
                     <div class="receipt-header">
                         <h2>ABICO STORE</h2>
-                        <p>123 Store Street, City</p>
+                        <p>123 Store Street, Sagay City</p>
                         <p>Tel: (123) 456-7890</p>
                         <p>TIN: 123-456-789-000</p>
                         <p>S/N: ${String(receiptData.id).padStart(5, '0')}</p>

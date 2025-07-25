@@ -365,6 +365,37 @@ include __DIR__ . "/../templates/nav.php";
 <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 
+<?php
+// Display success/error message if set in session
+if (isset($_SESSION['alert'])) {
+    $alert = $_SESSION['alert'];
+    unset($_SESSION['alert']); // Clear the message after displaying
+    ?>
+    <script>
+    $(document).ready(function() {
+        Swal.fire({
+            title: '<?php echo addslashes($alert['title']); ?>',
+            text: '<?php echo addslashes($alert['message']); ?>',
+            icon: '<?php echo $alert['icon']; ?>',
+            confirmButtonText: 'OK',
+            allowOutsideClick: false
+        }).then((result) => {
+            // Close the modal if it's open
+            const addProductModal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
+            if (addProductModal) {
+                addProductModal.hide();
+            }
+            // Clear the form if the submission was successful
+            if ('<?php echo $alert['icon']; ?>' === 'success') {
+                document.getElementById('addProductForm').reset();
+            }
+        });
+    });
+    </script>
+    <?php
+}
+?>
+
 <script>
 $(document).ready(function() {
     // Initialize tooltips

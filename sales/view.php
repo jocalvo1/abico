@@ -164,7 +164,7 @@ include __DIR__ . "/../templates/nav.php";
                     <div class="receipt-container p-4">
                         <div class="text-center mb-4">
                             <h2 class="mb-1">ABICO STORE</h2>
-                            <p class="mb-1">123 Store Street, City</p>
+                            <p class="mb-1">123 Store Street, SagayCity</p>
                             <p class="mb-1">Tel: (123) 456-7890</p>
                             <p class="mb-1">TIN: 123-456-789-000</p>
                             <p class="mb-1">S/N: <?php echo str_pad($transaction['id'], 5, '0', STR_PAD_LEFT); ?></p>
