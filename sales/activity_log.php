@@ -112,7 +112,7 @@ $(document).ready(function() {
         const activityTable = $('#activityTable').DataTable({
             responsive: true,
             autoWidth: false,
-            order: [[2, 'desc']], // Sort by date descending
+            order: [[3, 'desc']], // Sort by date column (index 3) descending
             stateSave: true, // Save state (pagination, search, etc.)
             stateDuration: 60 * 60 * 24, // 24 hours
             pageLength: 10,
@@ -145,9 +145,16 @@ $(document).ready(function() {
             columnDefs: [
                 {
                     targets: 0, // # column
-                    orderable: false,
+                    orderable: true,
                     className: 'text-center',
-                    width: '60px'
+                    width: '60px',
+                    type: 'num',
+                    render: function(data, type, row, meta) {
+                        if (type === 'sort' || type === 'type') {
+                            return meta.row + 1; // Return the actual row number for sorting
+                        }
+                        return data; // Return the displayed number for display
+                    }
                 },
                 { 
                     targets: 1, // Customer column
@@ -157,12 +164,12 @@ $(document).ready(function() {
                     targets: 3, // Date column
                     className: 'text-nowrap',
                     width: '180px',
-                    type: 'date',
-                    render: function(data, type, row) {
+                    orderData: [0], // Use the same order as the # column
+                    render: function(data, type, row, meta) {
                         if (type === 'sort' || type === 'type') {
-                            return new Date(data).getTime();
+                            return meta.row + 1; // Use row index for sorting
                         }
-                        return data;
+                        return data; // Return the formatted date for display
                     }
                 }
             ],

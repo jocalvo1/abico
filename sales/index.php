@@ -229,9 +229,16 @@ $(document).ready(function() {
                 { 
                     data: 'total_amount',
                     orderable: true,
-                    className: 'text-end',
-                    width: '120px',
-                    render: formatCurrency
+                    className: 'text-center pe-4',  
+                    width: '140px',  
+                    type: 'num',  
+                    render: function(data, type, row) {
+                        if (type === 'display') {
+                            return formatCurrency(data);
+                        }
+                        // Return raw number for sorting
+                        return parseFloat(data) || 0;
+                    }
                 },
                 { 
                     data: 'id',
